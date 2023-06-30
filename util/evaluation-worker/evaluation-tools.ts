@@ -3,18 +3,21 @@ import { EvaluationResult } from './evaluation-utils'
 import { setupComposer } from './composer-setup'
 
 let webPhpModulePromise: Promise<typeof WebPHP> | undefined
-function getWasmModule() {
+function getWasmModule(baseUrl: string) {
   if (!webPhpModulePromise) {
     // Vite does not work properly with dynamic imports in workers, so we need to eval the import
-    webPhpModulePromise = eval('import("/php-wasm/index.js")').then(
+    webPhpModulePromise = eval(`import("${baseUrl}php-wasm/index.js")`).then(
       (module: any) => module.WebPHP,
     )
   }
   return webPhpModulePromise!
 }
 
-export function getPhpEngine(version: SupportedPHPVersion): Promise<WebPHP> {
-  return getWasmModule().then(WebPHP =>
+export function getPhpEngine(
+  baseUrl: string,
+  version: SupportedPHPVersion,
+): Promise<WebPHP> {
+  return getWasmModule(baseUrl).then(WebPHP =>
     WebPHP.load(version, {
       requestHandler: {
         documentRoot: '/arena',
@@ -25,6 +28,7 @@ export function getPhpEngine(version: SupportedPHPVersion): Promise<WebPHP> {
 
 const enginePromises = new Map<string, Promise<WebPHP>>()
 export function getCachedPhpEngine(
+  baseUrl: string,
   version: SupportedPHPVersion,
 ): Promise<WebPHP> {
   let enginePromise: Promise<WebPHP>
@@ -32,7 +36,7 @@ export function getCachedPhpEngine(
   if (enginePromises.has(version)) {
     enginePromise = enginePromises.get(version)!
   } else {
-    enginePromise = getPhpEngine(version)
+    enginePromise = getPhpEngine(baseUrl, version)
     enginePromises.set(version, enginePromise)
   }
 
@@ -53,8 +57,6 @@ export async function evaluate(
     `<?php require_once __DIR__ . '/vendor/autoload.php' ?>${code}`,
   )
   let response = await php.run({ scriptPath: '/arena/index.php' })
-
-  console.log('response', response)
 
   return response.text
 }

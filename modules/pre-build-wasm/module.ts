@@ -26,7 +26,7 @@ export default defineNuxtModule({
           nodeResolve(),
           url({
             include: ['**/*.wasm'],
-            publicPath: '/php-wasm/',
+            publicPath: `${nuxt.options.app.baseURL}php-wasm/`,
           }),
         ],
       })

@@ -18,6 +18,7 @@ export function useEvaluator(
   }
 
   const worker = useEvaluationWorkerStore().get()
+  const runtimeConfig = useRuntimeConfig()
 
   function evaluate(code: string, version: SupportedPHPVersion) {
     return new Promise<EvaluationResult>(resolve => {
@@ -39,6 +40,7 @@ export function useEvaluator(
         id,
         code,
         version,
+        baseUrl: runtimeConfig.public.baseURL,
       } satisfies WorkerMessage)
     })
   }

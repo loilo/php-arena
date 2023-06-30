@@ -4,6 +4,7 @@ export type WorkerMessage = {
   id: string
   type: 'evaluate'
   code: string
+  baseUrl: string
   version: SupportedPHPVersion
 }
 
@@ -38,6 +39,10 @@ export function validateMessage(
 
   if (typeof message.code !== 'string') {
     throw new Error('Invalid message payload: code')
+  }
+
+  if (typeof message.baseUrl !== 'string') {
+    throw new Error('Invalid message payload: baseUrl')
   }
 
   if (
