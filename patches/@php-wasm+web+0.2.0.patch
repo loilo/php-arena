@@ -1,0 +1,90 @@
+diff --git a/node_modules/@php-wasm/web/php_5_6.js b/node_modules/@php-wasm/web/php_5_6.js
+index be1b1f1..8532f90 100644
+--- a/node_modules/@php-wasm/web/php_5_6.js
++++ b/node_modules/@php-wasm/web/php_5_6.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_5_6.wasm'; 
++import dependencyFilename from './php_5_6.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5239002; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_7_0.js b/node_modules/@php-wasm/web/php_7_0.js
+index d191fca..fa47c1e 100644
+--- a/node_modules/@php-wasm/web/php_7_0.js
++++ b/node_modules/@php-wasm/web/php_7_0.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_7_0.wasm'; 
++import dependencyFilename from './php_7_0.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5504039; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_7_1.js b/node_modules/@php-wasm/web/php_7_1.js
+index 32bc11e..60e9bf5 100644
+--- a/node_modules/@php-wasm/web/php_7_1.js
++++ b/node_modules/@php-wasm/web/php_7_1.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_7_1.wasm'; 
++import dependencyFilename from './php_7_1.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5641232; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_7_2.js b/node_modules/@php-wasm/web/php_7_2.js
+index 5f068da..715ad9f 100644
+--- a/node_modules/@php-wasm/web/php_7_2.js
++++ b/node_modules/@php-wasm/web/php_7_2.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_7_2.wasm'; 
++import dependencyFilename from './php_7_2.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 6009715; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_7_3.js b/node_modules/@php-wasm/web/php_7_3.js
+index 72f46b5..d7da690 100644
+--- a/node_modules/@php-wasm/web/php_7_3.js
++++ b/node_modules/@php-wasm/web/php_7_3.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_7_3.wasm'; 
++import dependencyFilename from './php_7_3.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5936703; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_7_4.js b/node_modules/@php-wasm/web/php_7_4.js
+index 5ba0e4e..bd5863c 100644
+--- a/node_modules/@php-wasm/web/php_7_4.js
++++ b/node_modules/@php-wasm/web/php_7_4.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_7_4.wasm'; 
++import dependencyFilename from './php_7_4.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 6038275; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_8_0.js b/node_modules/@php-wasm/web/php_8_0.js
+index fb97e53..0876ba0 100644
+--- a/node_modules/@php-wasm/web/php_8_0.js
++++ b/node_modules/@php-wasm/web/php_8_0.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_8_0.wasm'; 
++import dependencyFilename from './php_8_0.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5844089; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_8_1.js b/node_modules/@php-wasm/web/php_8_1.js
+index fd6b31a..5cf4a4e 100644
+--- a/node_modules/@php-wasm/web/php_8_1.js
++++ b/node_modules/@php-wasm/web/php_8_1.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_8_1.wasm'; 
++import dependencyFilename from './php_8_1.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5653952; 
+ export function init(RuntimeName, PHPLoader) {
+diff --git a/node_modules/@php-wasm/web/php_8_2.js b/node_modules/@php-wasm/web/php_8_2.js
+index 22690be..25964d6 100644
+--- a/node_modules/@php-wasm/web/php_8_2.js
++++ b/node_modules/@php-wasm/web/php_8_2.js
+@@ -1,4 +1,4 @@
+-import dependencyFilename from './php_8_2.wasm'; 
++import dependencyFilename from './php_8_2.wasm?url'; 
+  export { dependencyFilename }; 
+ export const dependenciesTotalSize = 5772832; 
+ export function init(RuntimeName, PHPLoader) {
