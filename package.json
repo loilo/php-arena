@@ -42,7 +42,7 @@
     "@php-wasm/web": "^0.2.0",
     "@prettier/plugin-php": "^0.19.6",
     "@vueuse/nuxt": "^10.2.1",
-    "floating-vue": "^2.0.0-beta.20",
+    "floating-vue": "^2.0.0-beta.24",
     "install": "^0.13.0",
     "lz-string": "^1.5.0",
     "npm": "^9.7.1"
