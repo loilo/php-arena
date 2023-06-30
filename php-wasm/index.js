@@ -1407,23 +1407,23 @@ function N(t) {
 async function qe(t = ye) {
   switch (t) {
     case "8.2":
-      return await import('./php_8_2-4bd2e76c.js');
+      return await import('./php_8_2-00ac9e6d.js');
     case "8.1":
-      return await import('./php_8_1-7a0c1791.js');
+      return await import('./php_8_1-12a718ff.js');
     case "8.0":
-      return await import('./php_8_0-6e11ddba.js');
+      return await import('./php_8_0-382336b4.js');
     case "7.4":
-      return await import('./php_7_4-0eb2941f.js');
+      return await import('./php_7_4-dad64529.js');
     case "7.3":
-      return await import('./php_7_3-552859eb.js');
+      return await import('./php_7_3-3fb0b4c8.js');
     case "7.2":
-      return await import('./php_7_2-71e0a30e.js');
+      return await import('./php_7_2-2f277b71.js');
     case "7.1":
-      return await import('./php_7_1-b1c455b3.js');
+      return await import('./php_7_1-2c4747f8.js');
     case "7.0":
-      return await import('./php_7_0-3e507eb1.js');
+      return await import('./php_7_0-75c1b9f8.js');
     case "5.6":
-      return await import('./php_5_6-deffa59c.js');
+      return await import('./php_5_6-e9afad21.js');
   }
   throw new Error(`Unsupported PHP version ${t}`);
 }

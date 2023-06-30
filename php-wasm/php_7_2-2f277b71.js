@@ -1,4 +1,4 @@
-var dependencyFilename = "/php-wasm/7f446a12f17b4763.wasm";
+var dependencyFilename = "/php-arena/php-wasm/7f446a12f17b4763.wasm";
 
 const dependenciesTotalSize = 6009715; 
 function init(RuntimeName, PHPLoader) {
