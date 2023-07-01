@@ -51,10 +51,11 @@ export async function evaluate(
     php.rmdir('/arena', { recursive: true })
   }
   php.mkdir('/arena')
-  setupComposer(php)
+  // setupComposer(php)
   php.writeFile(
     '/arena/index.php',
-    `<?php require_once __DIR__ . '/vendor/autoload.php' ?>${code}`,
+    // `<?php require_once __DIR__ . '/vendor/autoload.php' ?>${code}`,
+    code,
   )
   let response = await php.run({ scriptPath: '/arena/index.php' })
 
