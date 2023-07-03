@@ -2,12 +2,10 @@
 
 import type { SupportedPHPVersion } from '@php-wasm/web'
 import type {
-  WorkerMessage,
-  EvaluationWorkerResponse,
   EvaluationResult,
+  EvaluationWorkerResponse,
+  WorkerMessage,
 } from 'util/evaluation-worker/evaluation-utils'
-
-import type { ToRefs } from 'vue'
 
 export function useEvaluator(
   input: Ref<string>,
