@@ -3,6 +3,7 @@ import * as darkTheme from '@/assets/theme-dark'
 import * as lightTheme from '@/assets/theme-light'
 import { php } from '@codemirror/lang-php'
 import { keymap } from '@codemirror/view'
+import type { SupportedPHPVersion } from '@php-wasm/web'
 
 const themeStore = useColorThemeStore()
 
@@ -23,11 +24,18 @@ watch(
   },
   { immediate: true },
 )
+const evaluatedPhpVersion = ref<SupportedPHPVersion>('8.2')
+watch(
+  () => phpVersionStore.state,
+  phpVersion => {
+    if (!autoRunStore.state) return
 
-const outputCode = useEvaluator(
-  evaluatedInputCode,
-  toRef(phpVersionStore, 'state'),
+    evaluatedPhpVersion.value = phpVersion
+  },
+  { immediate: true },
 )
+
+const outputCode = useEvaluator(evaluatedInputCode, evaluatedPhpVersion)
 
 const throttledOutputCode = ref('')
 watch(outputCode, outputCodeValue => {
@@ -37,7 +45,7 @@ watch(outputCode, outputCodeValue => {
   throttledOutputCode.value = outputCodeValue
 })
 
-// When re-enabling auto running, re-evaluate the input code
+// When re-enabling auto running, re-evaluate the input code and version
 watch(
   () => autoRunStore.state,
   autoRun => {
@@ -45,6 +53,7 @@ watch(
     if (typeof outputCode.value === 'undefined') return
 
     evaluatedInputCode.value = inputCodeStore.state
+    evaluatedPhpVersion.value = phpVersionStore.state
   },
 )
 
