@@ -72,6 +72,7 @@ function share() {
         highlight
         :label="outputModeStore.state === 'raw' ? 'Raw' : 'HTML'"
         :icon="outputModeStore.state === 'raw' ? 'code' : 'html'"
+        :shortcut="{ key: 'Digit1', label: '1' }"
       />
       <IconButton
         @click="phpVersionStore.next()"
@@ -79,8 +80,14 @@ function share() {
         :label="phpVersionStore.state"
         icon="php"
         size="h-3.5 sm:h-4 w-auto"
+        :shortcut="{ key: 'Digit2', label: '2' }"
       />
-      <ToggleButton v-model="autoRunStore.state" label="Auto-run" icon="redo" />
+      <ToggleButton
+        v-model="autoRunStore.state"
+        label="Auto-run"
+        icon="redo"
+        :shortcut="{ key: 'Digit3', label: '3' }"
+      />
       <IconButton
         class="md:mt-auto"
         @click="applyFormatting"
@@ -88,6 +95,7 @@ function share() {
         label="Format"
         icon="wand"
         :disabled="inputCodeStore.state.length === 0"
+        :shortcut="{ key: 'Digit4', label: '4' }"
       />
       <IconButton
         class="md:mb-auto"
@@ -96,6 +104,7 @@ function share() {
         label="Share"
         icon="share"
         :disabled="inputCodeStore.state.length === 0"
+        :shortcut="{ key: 'Digit5', label: '5' }"
       />
       <IconButton
         @click="themeStore.toggle()"
@@ -114,6 +123,7 @@ function share() {
             ? 'moon'
             : 'sun'
         "
+        :shortcut="{ key: 'Digit6', label: '6' }"
       />
       <IconButton
         highlight
