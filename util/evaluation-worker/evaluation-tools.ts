@@ -1,6 +1,7 @@
 import type { WebPHP, SupportedPHPVersion } from '@php-wasm/web'
 import { EvaluationResult } from './evaluation-utils'
-import { setupComposer } from './composer-setup'
+import * as setup56 from './composer-setup-5.6'
+import * as setup81 from './composer-setup-8.1'
 
 let webPhpModulePromise: Promise<typeof WebPHP> | undefined
 function getWasmModule(baseUrl: string) {
@@ -43,19 +44,46 @@ export function getCachedPhpEngine(
   return enginePromise
 }
 
+export async function getComposerSetupFunction(
+  version: SupportedPHPVersion,
+): Promise<(engine: WebPHP) => void> {
+  // TODO: Use dynamic imports as soon as Vite allows that in workers (vitejs/vite#10057)
+  if (version.localeCompare('8.1') >= 0) {
+    return setup81.setupComposer
+  } else {
+    return setup56.setupComposer
+  }
+}
+
+const setupPromises = new Map<string, Promise<(engine: WebPHP) => void>>()
+export function getCachedComposerSetupFunction(
+  version: SupportedPHPVersion,
+): Promise<(engine: WebPHP) => void> {
+  let setupPromise: Promise<(engine: WebPHP) => void>
+
+  if (setupPromises.has(version)) {
+    setupPromise = setupPromises.get(version)!
+  } else {
+    setupPromise = getComposerSetupFunction(version)
+    setupPromises.set(version, setupPromise)
+  }
+
+  return setupPromise
+}
+
 export async function evaluate(
   php: WebPHP,
   code: string,
+  setupFunction?: (engine: WebPHP) => void,
 ): Promise<EvaluationResult> {
   if (php.fileExists('/arena')) {
     php.rmdir('/arena', { recursive: true })
   }
   php.mkdir('/arena')
-  // setupComposer(php)
+  setupFunction?.(php)
   php.writeFile(
     '/arena/index.php',
-    // `<?php require_once __DIR__ . '/vendor/autoload.php' ?>${code}`,
-    code,
+    `<?php require_once __DIR__ . '/vendor/autoload.php' ?>${code}`,
   )
   let response = await php.run({ scriptPath: '/arena/index.php' })
 
