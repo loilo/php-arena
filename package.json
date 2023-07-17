@@ -19,7 +19,7 @@
     "@types/node": "^18",
     "@vite-pwa/nuxt": "^0.1.0",
     "fs-extra": "^11.1.1",
-    "nuxt": "^3.6.2",
+    "nuxt": "^3.6.3",
     "nuxt-headlessui": "^1.1.4",
     "pinia": "^2.0.35",
     "prettier": "^2.8.8",
