@@ -9,7 +9,7 @@ addEventListener('message', async event => {
   let success = true
   let result = ''
   try {
-    result = format(data.code, {
+    result = await format(data.code, {
       phpVersion: data.version,
     })
   } catch {

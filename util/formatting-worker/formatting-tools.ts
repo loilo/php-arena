@@ -1,13 +1,11 @@
-// @ts-expect-error
 import prettier from 'prettier/standalone'
-// @ts-expect-error
-import HtmlPlugin from 'prettier/parser-html'
+import * as HtmlPlugin from 'prettier/plugins/html'
 // @ts-expect-error
 import PhpPlugin from '@prettier/plugin-php/standalone'
 
 import type { SupportedPHPVersion } from '@php-wasm/web'
 
-export function format(
+export async function format(
   code: string,
   {
     printWidth = 80,
@@ -45,5 +43,5 @@ export function format(
     parser: 'php',
   }
 
-  return prettier.format(code, parseOptions)
+  return await prettier.format(code, parseOptions)
 }
