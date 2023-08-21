@@ -1,7 +1,7 @@
 import prettier from 'prettier/standalone'
 import * as HtmlPlugin from 'prettier/plugins/html'
 // @ts-expect-error
-import PhpPlugin from '@prettier/plugin-php/standalone'
+import * as PhpPlugin from '@prettier/plugin-php/standalone'
 
 import type { SupportedPHPVersion } from '@php-wasm/web'
 
