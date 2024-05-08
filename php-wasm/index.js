@@ -1,5 +1,84 @@
-const W = Symbol("error"), $ = Symbol("message");
-class I extends Event {
+var D = (e, t, r) => {
+  if (!t.has(e))
+    throw TypeError("Cannot " + r);
+};
+var d = (e, t, r) => (D(e, t, "read from private field"), r ? r.call(e) : t.get(e)), u = (e, t, r) => {
+  if (t.has(e))
+    throw TypeError("Cannot add the same private member more than once");
+  t instanceof WeakSet ? t.add(e) : t.set(e, r);
+}, m = (e, t, r, s) => (D(e, t, "write to private field"), t.set(e, r), r);
+var p = (e, t, r) => (D(e, t, "access private method"), r);
+const currentJsRuntime$1 = function() {
+  var e;
+  return typeof process < "u" && ((e = process.release) == null ? void 0 : e.name) === "node" ? "NODE" : typeof window < "u" ? "WEB" : (
+    // @ts-ignore
+    typeof WorkerGlobalScope < "u" && // @ts-ignore
+    self instanceof WorkerGlobalScope ? "WORKER" : "NODE"
+  );
+}();
+if (currentJsRuntime$1 === "NODE") {
+  let e = function(r) {
+    return new Promise(function(s, n) {
+      r.onload = r.onerror = function(o) {
+        r.onload = r.onerror = null, o.type === "load" ? s(r.result) : n(new Error("Failed to read the blob/file"));
+      };
+    });
+  }, t = function() {
+    const r = new Uint8Array([1, 2, 3, 4]), n = new File([r], "test").stream();
+    try {
+      return n.getReader({ mode: "byob" }), !0;
+    } catch {
+      return !1;
+    }
+  };
+  if (typeof File > "u") {
+    class r extends Blob {
+      constructor(n, o, i) {
+        super(n);
+        let a;
+        i != null && i.lastModified && (a = /* @__PURE__ */ new Date()), (!a || isNaN(a.getFullYear())) && (a = /* @__PURE__ */ new Date()), this.lastModifiedDate = a, this.lastModified = a.getMilliseconds(), this.name = o || "";
+      }
+    }
+    global.File = r;
+  }
+  typeof Blob.prototype.arrayBuffer > "u" && (Blob.prototype.arrayBuffer = function() {
+    const s = new FileReader();
+    return s.readAsArrayBuffer(this), e(s);
+  }), typeof Blob.prototype.text > "u" && (Blob.prototype.text = function() {
+    const s = new FileReader();
+    return s.readAsText(this), e(s);
+  }), (typeof Blob.prototype.stream > "u" || !t()) && (Blob.prototype.stream = function() {
+    let r = 0;
+    const s = this;
+    return new ReadableStream({
+      type: "bytes",
+      // 0.5 MB seems like a reasonable chunk size, let's adjust
+      // this if needed.
+      autoAllocateChunkSize: 512 * 1024,
+      async pull(n) {
+        const o = n.byobRequest.view, a = await s.slice(
+          r,
+          r + o.byteLength
+        ).arrayBuffer(), l = new Uint8Array(a);
+        new Uint8Array(o.buffer).set(l);
+        const c = l.byteLength;
+        n.byobRequest.respond(c), r += c, r >= s.size && n.close();
+      }
+    });
+  });
+}
+if (currentJsRuntime$1 === "NODE" && typeof CustomEvent > "u") {
+  class e extends Event {
+    constructor(r, s = {}) {
+      super(r, s), this.detail = s.detail;
+    }
+    initCustomEvent() {
+    }
+  }
+  globalThis.CustomEvent = e;
+}
+const kError = Symbol("error"), kMessage = Symbol("message");
+class ErrorEvent2 extends Event {
   /**
    * Create a new `ErrorEvent`.
    *
@@ -7,92 +86,258 @@ class I extends Event {
    * @param options A dictionary object that allows for setting
    *                  attributes via object members of the same name.
    */
-  constructor(e, r = {}) {
-    super(e), this[W] = r.error === void 0 ? null : r.error, this[$] = r.message === void 0 ? "" : r.message;
+  constructor(t, r = {}) {
+    super(t), this[kError] = r.error === void 0 ? null : r.error, this[kMessage] = r.message === void 0 ? "" : r.message;
   }
   get error() {
-    return this[W];
+    return this[kError];
   }
   get message() {
-    return this[$];
+    return this[kMessage];
   }
 }
-Object.defineProperty(I.prototype, "error", { enumerable: !0 });
-Object.defineProperty(I.prototype, "message", { enumerable: !0 });
-const oe = typeof globalThis.ErrorEvent == "function" ? globalThis.ErrorEvent : I;
-function ae(t) {
-  return t instanceof Error ? "exitCode" in t && t?.exitCode === 0 || t?.name === "ExitStatus" && "status" in t && t.status === 0 : !1;
+Object.defineProperty(ErrorEvent2.prototype, "error", { enumerable: !0 });
+Object.defineProperty(ErrorEvent2.prototype, "message", { enumerable: !0 });
+const ErrorEvent = typeof globalThis.ErrorEvent == "function" ? globalThis.ErrorEvent : ErrorEvent2;
+function isExitCodeZero(e) {
+  return e instanceof Error ? "exitCode" in e && (e == null ? void 0 : e.exitCode) === 0 || (e == null ? void 0 : e.name) === "ExitStatus" && "status" in e && e.status === 0 : !1;
 }
-class ce extends EventTarget {
+const logToConsole = (e, ...t) => {
+  switch (e.severity) {
+    case "Debug":
+      console.debug(e.message, ...t);
+      break;
+    case "Info":
+      console.info(e.message, ...t);
+      break;
+    case "Warn":
+      console.warn(e.message, ...t);
+      break;
+    case "Error":
+      console.error(e.message, ...t);
+      break;
+    case "Fatal":
+      console.error(e.message, ...t);
+      break;
+    default:
+      console.log(e.message, ...t);
+  }
+}, prepareLogMessage = (e, ...t) => [
+  typeof e == "object" ? JSON.stringify(e) : e,
+  ...t.map((r) => JSON.stringify(r))
+].join(" "), logs = [], addToLogArray = (e) => {
+  logs.push(e);
+}, logToMemory = (e) => {
+  if (e.raw === !0)
+    addToLogArray(e.message);
+  else {
+    const t = formatLogEntry(
+      typeof e.message == "object" ? prepareLogMessage(e.message) : e.message,
+      e.severity ?? "Info",
+      e.prefix ?? "JavaScript"
+    );
+    addToLogArray(t);
+  }
+};
+class Logger extends EventTarget {
+  // constructor
+  constructor(t = []) {
+    super(), this.handlers = t, this.fatalErrorEvent = "playground-fatal-error";
+  }
+  /**
+   * Get all logs.
+   * @returns string[]
+   */
+  getLogs() {
+    return this.handlers.includes(logToMemory) ? [...logs] : (this.error(`Logs aren't stored because the logToMemory handler isn't registered.
+				If you're using a custom logger instance, make sure to register logToMemory handler.
+			`), []);
+  }
+  /**
+   * Log message with severity.
+   *
+   * @param message any
+   * @param severity LogSeverity
+   * @param raw boolean
+   * @param args any
+   */
+  logMessage(t, ...r) {
+    for (const s of this.handlers)
+      s(t, ...r);
+  }
+  /**
+   * Log message
+   *
+   * @param message any
+   * @param args any
+   */
+  log(t, ...r) {
+    this.logMessage(
+      {
+        message: t,
+        severity: void 0,
+        prefix: "JavaScript",
+        raw: !1
+      },
+      ...r
+    );
+  }
+  /**
+   * Log debug message
+   *
+   * @param message any
+   * @param args any
+   */
+  debug(t, ...r) {
+    this.logMessage(
+      {
+        message: t,
+        severity: "Debug",
+        prefix: "JavaScript",
+        raw: !1
+      },
+      ...r
+    );
+  }
+  /**
+   * Log info message
+   *
+   * @param message any
+   * @param args any
+   */
+  info(t, ...r) {
+    this.logMessage(
+      {
+        message: t,
+        severity: "Info",
+        prefix: "JavaScript",
+        raw: !1
+      },
+      ...r
+    );
+  }
+  /**
+   * Log warning message
+   *
+   * @param message any
+   * @param args any
+   */
+  warn(t, ...r) {
+    this.logMessage(
+      {
+        message: t,
+        severity: "Warn",
+        prefix: "JavaScript",
+        raw: !1
+      },
+      ...r
+    );
+  }
+  /**
+   * Log error message
+   *
+   * @param message any
+   * @param args any
+   */
+  error(t, ...r) {
+    this.logMessage(
+      {
+        message: t,
+        severity: "Error",
+        prefix: "JavaScript",
+        raw: !1
+      },
+      ...r
+    );
+  }
+}
+const logger = new Logger([logToMemory, logToConsole]), formatLogEntry = (e, t, r) => {
+  const s = /* @__PURE__ */ new Date(), n = new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    timeZone: "UTC"
+  }).format(s).replace(/ /g, "-"), o = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: !1,
+    timeZone: "UTC",
+    timeZoneName: "short"
+  }).format(s);
+  return `[${n + " " + o}] ${r} ${t}: ${e}`;
+};
+class UnhandledRejectionsTarget extends EventTarget {
   constructor() {
     super(...arguments), this.listenersCount = 0;
   }
-  addEventListener(e, r) {
-    ++this.listenersCount, super.addEventListener(e, r);
+  addEventListener(t, r) {
+    ++this.listenersCount, super.addEventListener(t, r);
   }
-  removeEventListener(e, r) {
-    --this.listenersCount, super.removeEventListener(e, r);
+  removeEventListener(t, r) {
+    --this.listenersCount, super.removeEventListener(t, r);
   }
   hasListeners() {
     return this.listenersCount > 0;
   }
 }
-function le(t) {
-  t.asm = {
-    ...t.asm
+function improveWASMErrorReporting(e) {
+  e.asm = {
+    ...e.asm
   };
-  const e = new ce();
-  for (const r in t.asm)
-    if (typeof t.asm[r] == "function") {
-      const n = t.asm[r];
-      t.asm[r] = function(...s) {
+  const t = new UnhandledRejectionsTarget();
+  for (const r in e.asm)
+    if (typeof e.asm[r] == "function") {
+      const s = e.asm[r];
+      e.asm[r] = function(...n) {
+        var o;
         try {
-          return n(...s);
-        } catch (o) {
-          if (!(o instanceof Error))
-            throw o;
-          const i = he(
-            o,
-            t.lastAsyncifyStackSource?.stack
+          return s(...n);
+        } catch (i) {
+          if (!(i instanceof Error))
+            throw i;
+          const a = clarifyErrorMessage(
+            i,
+            (o = e.lastAsyncifyStackSource) == null ? void 0 : o.stack
           );
-          if (t.lastAsyncifyStackSource && (o.cause = t.lastAsyncifyStackSource), e.hasListeners()) {
-            e.dispatchEvent(
-              new oe("error", {
-                error: o,
-                message: i
+          if (e.lastAsyncifyStackSource && (i.cause = e.lastAsyncifyStackSource), t.hasListeners()) {
+            t.dispatchEvent(
+              new ErrorEvent("error", {
+                error: i,
+                message: a
               })
             );
             return;
           }
-          throw ae(o) || pe(i), o;
+          throw isExitCodeZero(i) || showCriticalErrorBox(a), i;
         }
       };
     }
-  return e;
+  return t;
 }
-let O = [];
-function ue() {
-  return O;
+let functionsMaybeMissingFromAsyncify = [];
+function getFunctionsMaybeMissingFromAsyncify() {
+  return functionsMaybeMissingFromAsyncify;
 }
-function he(t, e) {
-  if (t.message === "unreachable") {
-    let r = de;
-    e || (r += `
+function clarifyErrorMessage(e, t) {
+  if (e.message === "unreachable") {
+    let r = UNREACHABLE_ERROR;
+    t || (r += `
 
 This stack trace is lacking. For a better one initialize 
 the PHP runtime with { debug: true }, e.g. PHPNode.load('8.1', { debug: true }).
 
-`), O = me(
-      e || t.stack || ""
+`), functionsMaybeMissingFromAsyncify = extractPHPFunctionsFromStack(
+      t || e.stack || ""
     );
-    for (const n of O)
-      r += `    * ${n}
+    for (const s of functionsMaybeMissingFromAsyncify)
+      r += `    * ${s}
 `;
     return r;
   }
-  return t.message;
+  return e.message;
 }
-const de = `
+const UNREACHABLE_ERROR = `
 "unreachable" WASM instruction executed.
 
 The typical reason is a PHP function missing from the ASYNCIFY_ONLY
@@ -116,47 +361,248 @@ the Dockerfile, you'll need to trigger this error again with long stack
 traces enabled. In node.js, you can do it using the --stack-trace-limit=100
 CLI option: 
 
-`, D = "\x1B[41m", fe = "\x1B[1m", q = "\x1B[0m", z = "\x1B[K";
-let B = !1;
-function pe(t) {
-  if (!B) {
-    B = !0, console.log(`${D}
-${z}
-${fe}  WASM ERROR${q}${D}`);
-    for (const e of t.split(`
+`, redBg = "\x1B[41m", bold = "\x1B[1m", reset = "\x1B[0m", eol = "\x1B[K";
+let logged = !1;
+function showCriticalErrorBox(e) {
+  if (!logged && (logged = !0, !(e != null && e.trim().startsWith("Program terminated with exit")))) {
+    logger.log(`${redBg}
+${eol}
+${bold}  WASM ERROR${reset}${redBg}`);
+    for (const t of e.split(`
 `))
-      console.log(`${z}  ${e} `);
-    console.log(`${q}`);
+      logger.log(`${eol}  ${t} `);
+    logger.log(`${reset}`);
   }
 }
-function me(t) {
+function extractPHPFunctionsFromStack(e) {
   try {
-    const e = t.split(`
+    const t = e.split(`
 `).slice(1).map((r) => {
-      const n = r.trim().substring(3).split(" ");
+      const s = r.trim().substring(3).split(" ");
       return {
-        fn: n.length >= 2 ? n[0] : "<unknown>",
+        fn: s.length >= 2 ? s[0] : "<unknown>",
         isWasm: r.includes("wasm://")
       };
     }).filter(
-      ({ fn: r, isWasm: n }) => n && !r.startsWith("dynCall_") && !r.startsWith("invoke_")
+      ({ fn: r, isWasm: s }) => s && !r.startsWith("dynCall_") && !r.startsWith("invoke_")
     ).map(({ fn: r }) => r);
-    return Array.from(new Set(e));
+    return Array.from(new Set(t));
   } catch {
     return [];
   }
 }
-class b {
-  constructor(e, r, n, s = "", o = 0) {
-    this.httpStatusCode = e, this.headers = r, this.bytes = n, this.exitCode = o, this.errors = s;
+const SleepFinished = Symbol("SleepFinished");
+function sleep(e) {
+  return new Promise((t) => {
+    setTimeout(() => t(SleepFinished), e);
+  });
+}
+class AcquireTimeoutError extends Error {
+  constructor() {
+    super("Acquiring lock timed out");
   }
-  static fromRawData(e) {
-    return new b(
-      e.httpStatusCode,
-      e.headers,
-      e.bytes,
-      e.errors,
-      e.exitCode
+}
+class Semaphore {
+  constructor({ concurrency: t, timeout: r }) {
+    this._running = 0, this.concurrency = t, this.timeout = r, this.queue = [];
+  }
+  get remaining() {
+    return this.concurrency - this.running;
+  }
+  get running() {
+    return this._running;
+  }
+  async acquire() {
+    for (; ; )
+      if (this._running >= this.concurrency) {
+        const t = new Promise((r) => {
+          this.queue.push(r);
+        });
+        this.timeout !== void 0 ? await Promise.race([t, sleep(this.timeout)]).then(
+          (r) => {
+            if (r === SleepFinished)
+              throw new AcquireTimeoutError();
+          }
+        ) : await t;
+      } else {
+        this._running++;
+        let t = !1;
+        return () => {
+          t || (t = !0, this._running--, this.queue.length > 0 && this.queue.shift()());
+        };
+      }
+  }
+  async run(t) {
+    const r = await this.acquire();
+    try {
+      return await t();
+    } finally {
+      r();
+    }
+  }
+}
+class PhpWasmError extends Error {
+  constructor(t, r) {
+    super(t), this.userFriendlyMessage = r, this.userFriendlyMessage || (this.userFriendlyMessage = t);
+  }
+}
+function joinPaths(...e) {
+  let t = e.join("/");
+  const r = t[0] === "/", s = t.substring(t.length - 1) === "/";
+  return t = normalizePath(t), !t && !r && (t = "."), t && s && (t += "/"), t;
+}
+function normalizePath(e) {
+  const t = e[0] === "/";
+  return e = normalizePathsArray(
+    e.split("/").filter((r) => !!r),
+    !t
+  ).join("/"), (t ? "/" : "") + e.replace(/\/$/, "");
+}
+function normalizePathsArray(e, t) {
+  let r = 0;
+  for (let s = e.length - 1; s >= 0; s--) {
+    const n = e[s];
+    n === "." ? e.splice(s, 1) : n === ".." ? (e.splice(s, 1), r++) : r && (e.splice(s, 1), r--);
+  }
+  if (t)
+    for (; r; r--)
+      e.unshift("..");
+  return e;
+}
+function splitShellCommand(e) {
+  let s = 0, n = "";
+  const o = [];
+  let i = "";
+  for (let a = 0; a < e.length; a++) {
+    const l = e[a];
+    l === "\\" ? ((e[a + 1] === '"' || e[a + 1] === "'") && a++, i += e[a]) : s === 0 ? l === '"' || l === "'" ? (s = 1, n = l) : l.match(/\s/) ? (i.trim().length && o.push(i.trim()), i = l) : o.length && !i ? i = o.pop() + l : i += l : s === 1 && (l === n ? (s = 0, n = "") : i += l);
+  }
+  return i && o.push(i.trim()), o;
+}
+function createSpawnHandler(e) {
+  return function(t, r = [], s = {}) {
+    const n = new ChildProcess(), o = new ProcessApi(n);
+    return setTimeout(async () => {
+      let i = [];
+      if (r.length)
+        i = [t, ...r];
+      else if (typeof t == "string")
+        i = splitShellCommand(t);
+      else if (Array.isArray(t))
+        i = t;
+      else
+        throw new Error("Invalid command ", t);
+      try {
+        await e(i, o, s);
+      } catch (a) {
+        n.emit("error", a), typeof a == "object" && a !== null && "message" in a && typeof a.message == "string" && o.stderr(a.message), o.exit(1);
+      }
+      n.emit("spawn", !0);
+    }), n;
+  };
+}
+class EventEmitter {
+  constructor() {
+    this.listeners = {};
+  }
+  emit(t, r) {
+    this.listeners[t] && this.listeners[t].forEach(function(s) {
+      s(r);
+    });
+  }
+  on(t, r) {
+    this.listeners[t] || (this.listeners[t] = []), this.listeners[t].push(r);
+  }
+}
+class ProcessApi extends EventEmitter {
+  constructor(t) {
+    super(), this.childProcess = t, this.exited = !1, this.stdinData = [], t.on("stdin", (r) => {
+      this.stdinData ? this.stdinData.push(r.slice()) : this.emit("stdin", r);
+    });
+  }
+  stdout(t) {
+    typeof t == "string" && (t = new TextEncoder().encode(t)), this.childProcess.stdout.emit("data", t);
+  }
+  stdoutEnd() {
+    this.childProcess.stdout.emit("end", {});
+  }
+  stderr(t) {
+    typeof t == "string" && (t = new TextEncoder().encode(t)), this.childProcess.stderr.emit("data", t);
+  }
+  stderrEnd() {
+    this.childProcess.stderr.emit("end", {});
+  }
+  exit(t) {
+    this.exited || (this.exited = !0, this.childProcess.emit("exit", t));
+  }
+  flushStdin() {
+    if (this.stdinData)
+      for (let t = 0; t < this.stdinData.length; t++)
+        this.emit("stdin", this.stdinData[t]);
+    this.stdinData = null;
+  }
+}
+let lastPid = 9743;
+class ChildProcess extends EventEmitter {
+  constructor(t = lastPid++) {
+    super(), this.pid = t, this.stdout = new EventEmitter(), this.stderr = new EventEmitter();
+    const r = this;
+    this.stdin = {
+      write: (s) => {
+        r.emit("stdin", s);
+      }
+    };
+  }
+}
+ReadableStream.prototype[Symbol.asyncIterator] || (ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+  const e = this.getReader();
+  try {
+    for (; ; ) {
+      const { done: t, value: r } = await e.read();
+      if (t)
+        return;
+      yield r;
+    }
+  } finally {
+    e.releaseLock();
+  }
+}, ReadableStream.prototype.iterate = // @ts-ignore
+ReadableStream.prototype[Symbol.asyncIterator]);
+const responseTexts = {
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  404: "Not Found",
+  403: "Forbidden",
+  401: "Unauthorized",
+  400: "Bad Request",
+  301: "Moved Permanently",
+  302: "Found",
+  307: "Temporary Redirect",
+  308: "Permanent Redirect",
+  204: "No Content",
+  201: "Created",
+  200: "OK"
+};
+class PHPResponse {
+  constructor(t, r, s, n = "", o = 0) {
+    this.httpStatusCode = t, this.headers = r, this.bytes = s, this.exitCode = o, this.errors = n;
+  }
+  static forHttpCode(t, r = "") {
+    return new PHPResponse(
+      t,
+      {},
+      new TextEncoder().encode(
+        r || responseTexts[t] || ""
+      )
+    );
+  }
+  static fromRawData(t) {
+    return new PHPResponse(
+      t.httpStatusCode,
+      t.headers,
+      t.bytes,
+      t.errors,
+      t.exitCode
     );
   }
   toRawData() {
@@ -181,7 +627,8 @@ class b {
     return new TextDecoder().decode(this.bytes);
   }
 }
-const ge = [
+const SupportedPHPVersions = [
+  "8.3",
   "8.2",
   "8.1",
   "8.0",
@@ -189,367 +636,8 @@ const ge = [
   "7.3",
   "7.2",
   "7.1",
-  "7.0",
-  "5.6"
-], ye = ge[0];
-class we {
-  #e;
-  #t;
-  /**
-   * @param  server - The PHP server to browse.
-   * @param  config - The browser configuration.
-   */
-  constructor(e, r = {}) {
-    this.requestHandler = e, this.#e = {}, this.#t = {
-      handleRedirects: !1,
-      maxRedirects: 4,
-      ...r
-    };
-  }
-  /**
-   * Sends the request to the server.
-   *
-   * When cookies are present in the response, this method stores
-   * them and sends them with any subsequent requests.
-   *
-   * When a redirection is present in the response, this method
-   * follows it by discarding a response and sending a subsequent
-   * request.
-   *
-   * @param  request   - The request.
-   * @param  redirects - Internal. The number of redirects handled so far.
-   * @returns PHPRequestHandler response.
-   */
-  async request(e, r = 0) {
-    const n = await this.requestHandler.request({
-      ...e,
-      headers: {
-        ...e.headers,
-        cookie: this.#r()
-      }
-    });
-    if (n.headers["set-cookie"] && this.#n(n.headers["set-cookie"]), this.#t.handleRedirects && n.headers.location && r < this.#t.maxRedirects) {
-      const s = new URL(
-        n.headers.location[0],
-        this.requestHandler.absoluteUrl
-      );
-      return this.request(
-        {
-          url: s.toString(),
-          method: "GET",
-          headers: {}
-        },
-        r + 1
-      );
-    }
-    return n;
-  }
-  /** @inheritDoc */
-  pathToInternalUrl(e) {
-    return this.requestHandler.pathToInternalUrl(e);
-  }
-  /** @inheritDoc */
-  internalUrlToPath(e) {
-    return this.requestHandler.internalUrlToPath(e);
-  }
-  /** @inheritDoc */
-  get absoluteUrl() {
-    return this.requestHandler.absoluteUrl;
-  }
-  /** @inheritDoc */
-  get documentRoot() {
-    return this.requestHandler.documentRoot;
-  }
-  #n(e) {
-    for (const r of e)
-      try {
-        if (!r.includes("="))
-          continue;
-        const n = r.indexOf("="), s = r.substring(0, n), o = r.substring(n + 1).split(";")[0];
-        this.#e[s] = o;
-      } catch (n) {
-        console.error(n);
-      }
-  }
-  #r() {
-    const e = [];
-    for (const r in this.#e)
-      e.push(`${r}=${this.#e[r]}`);
-    return e.join("; ");
-  }
-}
-class Pe {
-  constructor({ concurrency: e }) {
-    this._running = 0, this.concurrency = e, this.queue = [];
-  }
-  get running() {
-    return this._running;
-  }
-  async acquire() {
-    for (; ; )
-      if (this._running >= this.concurrency)
-        await new Promise((e) => this.queue.push(e));
-      else {
-        this._running++;
-        let e = !1;
-        return () => {
-          e || (e = !0, this._running--, this.queue.length > 0 && this.queue.shift()());
-        };
-      }
-  }
-  async run(e) {
-    const r = await this.acquire();
-    try {
-      return await e();
-    } finally {
-      r();
-    }
-  }
-}
-const be = "http://example.com";
-function j(t) {
-  return t.toString().substring(t.origin.length);
-}
-function G(t, e) {
-  return !e || !t.startsWith(e) ? t : t.substring(e.length);
-}
-function Ee(t, e) {
-  return !e || t.startsWith(e) ? t : e + t;
-}
-class Re {
-  #e;
-  #t;
-  #n;
-  #r;
-  #i;
-  #s;
-  #o;
-  #a;
-  #c;
-  /**
-   * @param  php    - The PHP instance.
-   * @param  config - Request Handler configuration.
-   */
-  constructor(e, r = {}) {
-    this.#a = new Pe({ concurrency: 1 });
-    const {
-      documentRoot: n = "/www/",
-      absoluteUrl: s = typeof location == "object" ? location?.href : "",
-      isStaticFilePath: o = () => !1
-    } = r;
-    this.php = e, this.#e = n, this.#c = o;
-    const i = new URL(s);
-    this.#n = i.hostname, this.#r = i.port ? Number(i.port) : i.protocol === "https:" ? 443 : 80, this.#t = (i.protocol || "").replace(":", "");
-    const c = this.#r !== 443 && this.#r !== 80;
-    this.#i = [
-      this.#n,
-      c ? `:${this.#r}` : ""
-    ].join(""), this.#s = i.pathname.replace(/\/+$/, ""), this.#o = [
-      `${this.#t}://`,
-      this.#i,
-      this.#s
-    ].join("");
-  }
-  /** @inheritDoc */
-  pathToInternalUrl(e) {
-    return `${this.absoluteUrl}${e}`;
-  }
-  /** @inheritDoc */
-  internalUrlToPath(e) {
-    const r = new URL(e);
-    return r.pathname.startsWith(this.#s) && (r.pathname = r.pathname.slice(this.#s.length)), j(r);
-  }
-  get isRequestRunning() {
-    return this.#a.running > 0;
-  }
-  /** @inheritDoc */
-  get absoluteUrl() {
-    return this.#o;
-  }
-  /** @inheritDoc */
-  get documentRoot() {
-    return this.#e;
-  }
-  /** @inheritDoc */
-  async request(e) {
-    const r = e.url.startsWith("http://") || e.url.startsWith("https://"), n = new URL(
-      e.url,
-      r ? void 0 : be
-    ), s = G(
-      n.pathname,
-      this.#s
-    );
-    return this.#c(s) ? this.#l(s) : await this.#u(e, n);
-  }
-  /**
-   * Serves a static file from the PHP filesystem.
-   *
-   * @param  path - The requested static file path.
-   * @returns The response.
-   */
-  #l(e) {
-    const r = `${this.#e}${e}`;
-    if (!this.php.fileExists(r))
-      return new b(
-        404,
-        {},
-        new TextEncoder().encode("404 File not found")
-      );
-    const n = this.php.readFileAsBuffer(r);
-    return new b(
-      200,
-      {
-        "content-length": [`${n.byteLength}`],
-        // @TODO: Infer the content-type from the arrayBuffer instead of the file path.
-        //        The code below won't return the correct mime-type if the extension
-        //        was tampered with.
-        "content-type": [ve(r)],
-        "accept-ranges": ["bytes"],
-        "cache-control": ["public, max-age=0"]
-      },
-      n
-    );
-  }
-  /**
-   * Runs the requested PHP file with all the request and $_SERVER
-   * superglobals populated.
-   *
-   * @param  request - The request.
-   * @returns The response.
-   */
-  async #u(e, r) {
-    const n = await this.#a.acquire();
-    try {
-      this.php.addServerGlobalEntry("DOCUMENT_ROOT", this.#e), this.php.addServerGlobalEntry(
-        "HTTPS",
-        this.#o.startsWith("https://") ? "on" : ""
-      );
-      let s = "GET";
-      const o = {
-        host: this.#i,
-        ...Q(e.headers || {})
-      }, i = [];
-      if (e.files && Object.keys(e.files).length) {
-        s = "POST";
-        for (const a in e.files) {
-          const h = e.files[a];
-          i.push({
-            key: a,
-            name: h.name,
-            type: h.type,
-            data: new Uint8Array(await h.arrayBuffer())
-          });
-        }
-        o["content-type"]?.startsWith("multipart/form-data") && (e.formData = ke(
-          e.body || ""
-        ), o["content-type"] = "application/x-www-form-urlencoded", delete e.body);
-      }
-      let c;
-      e.formData !== void 0 ? (s = "POST", o["content-type"] = o["content-type"] || "application/x-www-form-urlencoded", c = new URLSearchParams(
-        e.formData
-      ).toString()) : c = e.body;
-      let l;
-      try {
-        l = this.#h(r.pathname);
-      } catch {
-        return new b(
-          404,
-          {},
-          new TextEncoder().encode("404 File not found")
-        );
-      }
-      return await this.php.run({
-        relativeUri: Ee(
-          j(r),
-          this.#s
-        ),
-        protocol: this.#t,
-        method: e.method || s,
-        body: c,
-        fileInfos: i,
-        scriptPath: l,
-        headers: o
-      });
-    } finally {
-      n();
-    }
-  }
-  /**
-   * Resolve the requested path to the filesystem path of the requested PHP file.
-   *
-   * Fall back to index.php as if there was a url rewriting rule in place.
-   *
-   * @param  requestedPath - The requested pathname.
-   * @throws {Error} If the requested path doesn't exist.
-   * @returns The resolved filesystem path.
-   */
-  #h(e) {
-    let r = G(e, this.#s);
-    r.includes(".php") ? r = r.split(".php")[0] + ".php" : (r.endsWith("/") || (r += "/"), r.endsWith("index.php") || (r += "index.php"));
-    const n = `${this.#e}${r}`;
-    if (this.php.fileExists(n))
-      return n;
-    if (!this.php.fileExists(`${this.#e}/index.php`))
-      throw new Error(`File not found: ${n}`);
-    return `${this.#e}/index.php`;
-  }
-}
-function ke(t) {
-  const e = {}, r = t.match(/--(.*)\r\n/);
-  if (!r)
-    return e;
-  const n = r[1], s = t.split(`--${n}`);
-  return s.shift(), s.pop(), s.forEach((o) => {
-    const i = o.indexOf(`\r
-\r
-`), c = o.substring(0, i).trim(), l = o.substring(i + 4).trim(), a = c.match(/name="([^"]+)"/);
-    if (a) {
-      const h = a[1];
-      e[h] = l;
-    }
-  }), e;
-}
-function ve(t) {
-  switch (t.split(".").pop()) {
-    case "css":
-      return "text/css";
-    case "js":
-      return "application/javascript";
-    case "png":
-      return "image/png";
-    case "jpg":
-    case "jpeg":
-      return "image/jpeg";
-    case "gif":
-      return "image/gif";
-    case "svg":
-      return "image/svg+xml";
-    case "woff":
-      return "font/woff";
-    case "woff2":
-      return "font/woff2";
-    case "ttf":
-      return "font/ttf";
-    case "otf":
-      return "font/otf";
-    case "eot":
-      return "font/eot";
-    case "ico":
-      return "image/x-icon";
-    case "html":
-      return "text/html";
-    case "json":
-      return "application/json";
-    case "xml":
-      return "application/xml";
-    case "txt":
-    case "md":
-      return "text/plain";
-    default:
-      return "application-octet-stream";
-  }
-}
-const V = {
+  "7.0"
+], LatestSupportedPHPVersion = SupportedPHPVersions[0], FileErrorCodes = {
   0: "No error occurred. System call completed successfully.",
   1: "Argument list too long.",
   2: "Permission denied.",
@@ -628,124 +716,192 @@ const V = {
   75: "Cross-device link.",
   76: "Extension: Capabilities insufficient."
 };
-function y(t = "") {
-  return function(r, n, s) {
-    const o = s.value;
-    s.value = function(...i) {
+function getEmscriptenFsError(e) {
+  const t = typeof e == "object" ? e == null ? void 0 : e.errno : null;
+  if (t in FileErrorCodes)
+    return FileErrorCodes[t];
+}
+function rethrowFileSystemError(e = "") {
+  return function(r, s, n) {
+    const o = n.value;
+    n.value = function(...i) {
       try {
         return o.apply(this, i);
-      } catch (c) {
-        const l = typeof c == "object" ? c?.errno : null;
-        if (l in V) {
-          const a = V[l], h = typeof i[0] == "string" ? i[0] : null, g = h !== null ? t.replaceAll("{path}", h) : t;
-          throw new Error(`${g}: ${a}`, {
-            cause: c
+      } catch (a) {
+        const l = typeof a == "object" ? a == null ? void 0 : a.errno : null;
+        if (l in FileErrorCodes) {
+          const c = FileErrorCodes[l], h = typeof i[0] == "string" ? i[0] : null, _ = h !== null ? e.replaceAll("{path}", h) : e;
+          throw new Error(`${_}: ${c}`, {
+            cause: a
           });
         }
-        throw c;
+        throw a;
       }
     };
   };
 }
-async function xe(t, e = {}, r = []) {
-  const [n, s, o] = Y(), [i, c] = Y(), l = t.init(Te, {
+const RuntimeId = Symbol("RuntimeId"), loadedRuntimes = /* @__PURE__ */ new Map();
+let lastRuntimeId = 0;
+async function loadPHPRuntime(e, t = {}) {
+  const [r, s, n] = makePromise(), o = e.init(currentJsRuntime, {
     onAbort(a) {
-      o(a), c(), console.error(a);
+      n(a), logger.error(a);
     },
     ENV: {},
     // Emscripten sometimes prepends a '/' to the path, which
     // breaks vite dev mode. An identity `locateFile` function
     // fixes it.
     locateFile: (a) => a,
-    ...e,
+    ...t,
     noInitialRun: !0,
     onRuntimeInitialized() {
-      e.onRuntimeInitialized && e.onRuntimeInitialized(), s();
-    },
-    monitorRunDependencies(a) {
-      a === 0 && (delete l.monitorRunDependencies, c());
+      t.onRuntimeInitialized && t.onRuntimeInitialized(), s();
     }
   });
-  return await Promise.all(
-    r.map(
-      ({ default: a }) => a(l)
-    )
-  ), r.length || c(), await i, await n, M.push(l), M.length - 1;
+  await r;
+  const i = ++lastRuntimeId;
+  return o.id = i, o.originalExit = o._exit, o._exit = function(a) {
+    return loadedRuntimes.delete(i), o.originalExit(a);
+  }, o[RuntimeId] = i, loadedRuntimes.set(i, o), i;
 }
-const M = [];
-function Se(t) {
-  return M[t];
+function getLoadedRuntime(e) {
+  return loadedRuntimes.get(e);
 }
-const Te = function() {
-  return typeof process < "u" && process.release?.name === "node" ? "NODE" : typeof window < "u" ? "WEB" : typeof WorkerGlobalScope < "u" && self instanceof WorkerGlobalScope ? "WORKER" : "NODE";
-}(), Y = () => {
-  const t = [], e = new Promise((r, n) => {
-    t.push(r, n);
+const currentJsRuntime = function() {
+  var e;
+  return typeof process < "u" && ((e = process.release) == null ? void 0 : e.name) === "node" ? "NODE" : typeof window < "u" ? "WEB" : typeof WorkerGlobalScope < "u" && self instanceof WorkerGlobalScope ? "WORKER" : "NODE";
+}(), makePromise = () => {
+  const e = [], t = new Promise((r, s) => {
+    e.push(r, s);
   });
-  return t.unshift(e), t;
+  return e.unshift(t), e;
 };
-var _e = Object.defineProperty, Ce = Object.getOwnPropertyDescriptor, w = (t, e, r, n) => {
-  for (var s = n > 1 ? void 0 : n ? Ce(e, r) : e, o = t.length - 1, i; o >= 0; o--)
-    (i = t[o]) && (s = (n ? i(e, r, s) : i(s)) || s);
-  return n && s && _e(e, r, s), s;
+var __defProp = Object.defineProperty, __getOwnPropDesc = Object.getOwnPropertyDescriptor, __decorateClass = (e, t, r, s) => {
+  for (var n = __getOwnPropDesc(t, r) , o = e.length - 1, i; o >= 0; o--)
+    (i = e[o]) && (n = (i(t, r, n) ) || n);
+  return n && __defProp(t, r, n), n;
 };
-const f = "string", E = "number", u = Symbol("__private__dont__use");
-class m {
+const STRING = "string", NUMBER = "number", __private__dont__use = Symbol("__private__dont__use");
+class PHPExecutionFailureError extends Error {
+  constructor(t, r, s) {
+    super(t), this.response = r, this.source = s;
+  }
+}
+var P, E, v, y, w, g, b, R, q, x, z, T, U, k, $, C, V, F, G, H, j, M, J, I, Q, N, Y, A, Z, L, K, O, X, W, ee, B, te;
+class BasePHP {
   /**
    * Initializes a PHP runtime.
    *
    * @internal
    * @param  PHPRuntime - Optional. PHP Runtime ID as initialized by loadPHPRuntime.
-   * @param  serverOptions - Optional. Options for the PHPRequestHandler. If undefined, no request handler will be initialized.
+   * @param  requestHandlerOptions - Optional. Options for the PHPRequestHandler. If undefined, no request handler will be initialized.
    */
-  constructor(e, r) {
-    this.#e = [], this.#t = !1, this.#n = null, this.#r = {}, this.#i = [], e !== void 0 && this.initializeRuntime(e), r && (this.requestHandler = new we(
-      new Re(this, r)
-    ));
+  constructor(e) {
+    /**
+     * Prepares the $_SERVER entries for the PHP runtime.
+     *
+     * @param defaults Default entries to include in $_SERVER.
+     * @param headers HTTP headers to include in $_SERVER (as HTTP_ prefixed entries).
+     * @param port HTTP port, used to determine infer $_SERVER['HTTPS'] value if none
+     *             was provided.
+     * @returns Computed $_SERVER entries.
+     */
+    u(this, R);
+    u(this, x);
+    u(this, T);
+    u(this, k);
+    u(this, C);
+    u(this, F);
+    u(this, H);
+    u(this, M);
+    u(this, I);
+    u(this, N);
+    u(this, A);
+    u(this, L);
+    u(this, O);
+    u(this, W);
+    u(this, B);
+    u(this, P, void 0);
+    u(this, E, void 0);
+    u(this, v, void 0);
+    u(this, y, void 0);
+    u(this, w, void 0);
+    u(this, g, void 0);
+    u(this, b, void 0);
+    m(this, P, []), m(this, y, !1), m(this, w, null), m(this, g, /* @__PURE__ */ new Map()), m(this, b, []), this.semaphore = new Semaphore({ concurrency: 1 }), e !== void 0 && this.initializeRuntime(e);
   }
-  #e;
-  #t;
-  #n;
-  #r;
-  #i;
+  addEventListener(e, t) {
+    d(this, g).has(e) || d(this, g).set(e, /* @__PURE__ */ new Set()), d(this, g).get(e).add(t);
+  }
+  removeEventListener(e, t) {
+    var r;
+    (r = d(this, g).get(e)) == null || r.delete(t);
+  }
+  dispatchEvent(e) {
+    const t = d(this, g).get(e.type);
+    if (t)
+      for (const r of t)
+        r(e);
+  }
   /** @inheritDoc */
   async onMessage(e) {
-    this.#i.push(e);
+    d(this, b).push(e);
+  }
+  /** @inheritDoc */
+  async setSpawnHandler(handler) {
+    typeof handler == "string" && (handler = createSpawnHandler(eval(handler))), this[__private__dont__use].spawnProcess = handler;
   }
   /** @inheritDoc */
   get absoluteUrl() {
-    return this.requestHandler.requestHandler.absoluteUrl;
+    return this.requestHandler.absoluteUrl;
   }
   /** @inheritDoc */
   get documentRoot() {
-    return this.requestHandler.requestHandler.documentRoot;
+    return this.requestHandler.documentRoot;
   }
   /** @inheritDoc */
   pathToInternalUrl(e) {
-    return this.requestHandler.requestHandler.pathToInternalUrl(e);
+    return this.requestHandler.pathToInternalUrl(e);
   }
   /** @inheritDoc */
   internalUrlToPath(e) {
-    return this.requestHandler.requestHandler.internalUrlToPath(
-      e
-    );
+    return this.requestHandler.internalUrlToPath(e);
   }
   initializeRuntime(e) {
-    if (this[u])
+    if (this[__private__dont__use])
       throw new Error("PHP runtime already initialized.");
-    const r = Se(e);
-    if (!r)
+    const t = getLoadedRuntime(e);
+    if (!t)
       throw new Error("Invalid PHP runtime id.");
-    this[u] = r, r.onMessage = (n) => {
-      for (const s of this.#i)
-        s(n);
-    }, this.#n = le(r);
+    this[__private__dont__use] = t, t.onMessage = async (r) => {
+      for (const s of d(this, b)) {
+        const n = await s(r);
+        if (n)
+          return n;
+      }
+      return "";
+    }, m(this, w, improveWASMErrorReporting(t)), this.dispatchEvent({
+      type: "runtime.initialized"
+    });
+  }
+  /** @inheritDoc */
+  async setSapiName(e) {
+    if (this[__private__dont__use].ccall(
+      "wasm_set_sapi_name",
+      NUMBER,
+      [STRING],
+      [e]
+    ) !== 0)
+      throw new Error(
+        "Could not set SAPI name. This can only be done before the PHP WASM module is initialized.Did you already dispatch any requests?"
+      );
+    m(this, v, e);
   }
   /** @inheritDoc */
   setPhpIniPath(e) {
-    if (this.#t)
+    if (d(this, y))
       throw new Error("Cannot set PHP ini path after calling run().");
-    this[u].ccall(
+    m(this, E, e), this[__private__dont__use].ccall(
       "wasm_set_phpini_path",
       null,
       ["string"],
@@ -753,238 +909,90 @@ class m {
     );
   }
   /** @inheritDoc */
-  setPhpIniEntry(e, r) {
-    if (this.#t)
+  setPhpIniEntry(e, t) {
+    if (d(this, y))
       throw new Error("Cannot set PHP ini entries after calling run().");
-    this.#e.push([e, r]);
+    d(this, P).push([e, t]);
   }
   /** @inheritDoc */
   chdir(e) {
-    this[u].FS.chdir(e);
+    this[__private__dont__use].FS.chdir(e);
   }
-  /** @inheritDoc */
-  async request(e, r) {
-    if (!this.requestHandler)
+  /**
+   * Do not use. Use new PHPRequestHandler() instead.
+   * @deprecated
+   */
+  async request(e) {
+    if (logger.warn(
+      "PHP.request() is deprecated. Please use new PHPRequestHandler() instead."
+    ), !this.requestHandler)
       throw new Error("No request handler available.");
-    return this.requestHandler.request(e, r);
+    return this.requestHandler.request(e);
   }
   /** @inheritDoc */
   async run(e) {
-    this.#t || (this.#s(), this.#t = !0), this.#d(e.scriptPath || ""), this.#a(e.relativeUri || ""), this.#l(e.method || "GET");
-    const { host: r, ...n } = {
-      host: "example.com:443",
-      ...Q(e.headers || {})
-    };
-    if (this.#c(r, e.protocol || "http"), this.#u(n), e.body && this.#h(e.body), e.fileInfos)
-      for (const s of e.fileInfos)
-        this.#p(s);
-    return e.code && this.#m(" ?>" + e.code), this.#f(), await this.#g();
-  }
-  #s() {
-    if (this.#e.length > 0) {
-      const e = this.#e.map(([r, n]) => `${r}=${n}`).join(`
-`) + `
-
-`;
-      this[u].ccall(
-        "wasm_set_phpini_entries",
-        null,
-        [f],
-        [e]
-      );
-    }
-    this[u].ccall("php_wasm_init", null, [], []);
-  }
-  #o() {
-    const e = "/tmp/headers.json";
-    if (!this.fileExists(e))
-      throw new Error(
-        "SAPI Error: Could not find response headers file."
-      );
-    const r = JSON.parse(this.readFileAsText(e)), n = {};
-    for (const s of r.headers) {
-      if (!s.includes(": "))
-        continue;
-      const o = s.indexOf(": "), i = s.substring(0, o).toLowerCase(), c = s.substring(o + 2);
-      i in n || (n[i] = []), n[i].push(c);
-    }
-    return {
-      headers: n,
-      httpStatusCode: r.status
-    };
-  }
-  #a(e) {
-    if (this[u].ccall(
-      "wasm_set_request_uri",
-      null,
-      [f],
-      [e]
-    ), e.includes("?")) {
-      const r = e.substring(e.indexOf("?") + 1);
-      this[u].ccall(
-        "wasm_set_query_string",
-        null,
-        [f],
-        [r]
-      );
-    }
-  }
-  #c(e, r) {
-    this[u].ccall(
-      "wasm_set_request_host",
-      null,
-      [f],
-      [e]
-    );
-    let n;
+    const t = await this.semaphore.acquire();
+    let r;
     try {
-      n = parseInt(new URL(e).port, 10);
+      if (d(this, y) || (p(this, x, z).call(this), m(this, y, !0)), e.scriptPath && !this.fileExists(e.scriptPath))
+        throw new Error(
+          `The script path "${e.scriptPath}" does not exist.`
+        );
+      p(this, A, Z).call(this, e.scriptPath || ""), p(this, k, $).call(this, e.relativeUri || ""), p(this, M, J).call(this, e.method || "GET");
+      const s = normalizeHeaders(e.headers || {}), n = s.host || "example.com:443", o = p(this, H, j).call(this, n, e.protocol || "http");
+      p(this, C, V).call(this, n), p(this, F, G).call(this, o), p(this, I, Q).call(this, s), e.body && (r = p(this, N, Y).call(this, e.body)), typeof e.code == "string" && p(this, W, ee).call(this, " ?>" + e.code);
+      const i = p(this, R, q).call(this, e.$_SERVER, s, o);
+      for (const c in i)
+        p(this, L, K).call(this, c, i[c]);
+      const a = e.env || {};
+      for (const c in a)
+        p(this, O, X).call(this, c, a[c]);
+      const l = await p(this, B, te).call(this);
+      if (l.exitCode !== 0) {
+        logger.warn("PHP.run() output was:", l.text);
+        const c = new PHPExecutionFailureError(
+          `PHP.run() failed with exit code ${l.exitCode} and the following output: ` + l.errors,
+          l,
+          "request"
+        );
+        throw logger.error(c), c;
+      }
+      return l;
+    } catch (s) {
+      throw this.dispatchEvent({
+        type: "request.error",
+        error: s,
+        // Distinguish between PHP request and PHP-wasm errors
+        source: s.source ?? "php-wasm"
+      }), s;
+    } finally {
+      try {
+        r && this[__private__dont__use].free(r);
+      } finally {
+        t(), this.dispatchEvent({
+          type: "request.end"
+        });
+      }
+    }
+  }
+  defineConstant(e, t) {
+    let r = {};
+    try {
+      r = JSON.parse(
+        this.fileExists("/internal/consts.json") && this.readFileAsText("/internal/consts.json") || "{}"
+      );
     } catch {
     }
-    (!n || isNaN(n) || n === 80) && (n = r === "https" ? 443 : 80), this[u].ccall(
-      "wasm_set_request_port",
-      null,
-      [E],
-      [n]
-    ), (r === "https" || !r && n === 443) && this.addServerGlobalEntry("HTTPS", "on");
-  }
-  #l(e) {
-    this[u].ccall(
-      "wasm_set_request_method",
-      null,
-      [f],
-      [e]
-    );
-  }
-  #u(e) {
-    e.cookie && this[u].ccall(
-      "wasm_set_cookies",
-      null,
-      [f],
-      [e.cookie]
-    ), e["content-type"] && this[u].ccall(
-      "wasm_set_content_type",
-      null,
-      [f],
-      [e["content-type"]]
-    ), e["content-length"] && this[u].ccall(
-      "wasm_set_content_length",
-      null,
-      [E],
-      [parseInt(e["content-length"], 10)]
-    );
-    for (const r in e) {
-      let n = "HTTP_";
-      ["content-type", "content-length"].includes(r.toLowerCase()) && (n = ""), this.addServerGlobalEntry(
-        `${n}${r.toUpperCase().replace(/-/g, "_")}`,
-        e[r]
-      );
-    }
-  }
-  #h(e) {
-    this[u].ccall(
-      "wasm_set_request_body",
-      null,
-      [f],
-      [e]
-    ), this[u].ccall(
-      "wasm_set_content_length",
-      null,
-      [E],
-      [new TextEncoder().encode(e).length]
-    );
-  }
-  #d(e) {
-    this[u].ccall(
-      "wasm_set_path_translated",
-      null,
-      [f],
-      [e]
-    );
-  }
-  addServerGlobalEntry(e, r) {
-    this.#r[e] = r;
-  }
-  #f() {
-    for (const e in this.#r)
-      this[u].ccall(
-        "wasm_add_SERVER_entry",
-        null,
-        [f, f],
-        [e, this.#r[e]]
-      );
-  }
-  /**
-   * Adds file information to $_FILES superglobal in PHP.
-   *
-   * In particular:
-   * * Creates the file data in the filesystem
-   * * Registers the file details in PHP
-   *
-   * @param  fileInfo - File details
-   */
-  #p(e) {
-    const { key: r, name: n, type: s, data: o } = e, i = `/tmp/${Math.random().toFixed(20)}`;
-    this.writeFile(i, o);
-    const c = 0;
-    this[u].ccall(
-      "wasm_add_uploaded_file",
-      null,
-      [f, f, f, f, E, E],
-      [r, n, s, i, c, o.byteLength]
-    );
-  }
-  #m(e) {
-    this[u].ccall(
-      "wasm_set_php_code",
-      null,
-      [f],
-      [e]
-    );
-  }
-  async #g() {
-    let e, r;
-    try {
-      e = await new Promise((o, i) => {
-        r = (l) => {
-          const a = new Error("Rethrown");
-          a.cause = l.error, a.betterMessage = l.message, i(a);
-        }, this.#n?.addEventListener(
-          "error",
-          r
-        );
-        const c = this[u].ccall(
-          "wasm_sapi_handle_request",
-          E,
-          [],
-          []
-        );
-        return c instanceof Promise ? c.then(o, i) : o(c);
-      });
-    } catch (o) {
-      for (const a in this)
-        typeof this[a] == "function" && (this[a] = () => {
-          throw new Error(
-            "PHP runtime has crashed – see the earlier error for details."
-          );
-        });
-      this.functionsMaybeMissingFromAsyncify = ue();
-      const i = o, c = "betterMessage" in i ? i.betterMessage : i.message, l = new Error(c);
-      throw l.cause = i, l;
-    } finally {
-      this.#n?.removeEventListener("error", r), this.#r = {};
-    }
-    const { headers: n, httpStatusCode: s } = this.#o();
-    return new b(
-      s,
-      n,
-      this.readFileAsBuffer("/tmp/stdout"),
-      this.readFileAsText("/tmp/stderr"),
-      e
+    this.writeFile(
+      "/internal/consts.json",
+      JSON.stringify({
+        ...r,
+        [e]: t
+      })
     );
   }
   mkdir(e) {
-    this[u].FS.mkdirTree(e);
+    this[__private__dont__use].FS.mkdirTree(e);
   }
   mkdirTree(e) {
     this.mkdir(e);
@@ -993,443 +1001,737 @@ class m {
     return new TextDecoder().decode(this.readFileAsBuffer(e));
   }
   readFileAsBuffer(e) {
-    return this[u].FS.readFile(e);
+    return this[__private__dont__use].FS.readFile(e);
   }
-  writeFile(e, r) {
-    this[u].FS.writeFile(e, r);
+  writeFile(e, t) {
+    this[__private__dont__use].FS.writeFile(e, t);
   }
   unlink(e) {
-    this[u].FS.unlink(e);
+    this[__private__dont__use].FS.unlink(e);
   }
-  mv(e, r) {
-    this[u].FS.rename(e, r);
+  /** @inheritDoc */
+  mv(e, t) {
+    try {
+      this[__private__dont__use].FS.rename(e, t);
+    } catch (r) {
+      const s = getEmscriptenFsError(r);
+      throw s ? new Error(
+        `Could not move ${e} to ${t}: ${s}`,
+        {
+          cause: r
+        }
+      ) : r;
+    }
   }
-  rmdir(e, r = { recursive: !0 }) {
-    r?.recursive && this.listFiles(e).forEach((n) => {
-      const s = `${e}/${n}`;
-      this.isDir(s) ? this.rmdir(s, r) : this.unlink(s);
-    }), this[u].FS.rmdir(e);
+  rmdir(e, t = { recursive: !0 }) {
+    t != null && t.recursive && this.listFiles(e).forEach((r) => {
+      const s = `${e}/${r}`;
+      this.isDir(s) ? this.rmdir(s, t) : this.unlink(s);
+    }), this[__private__dont__use].FS.rmdir(e);
   }
-  listFiles(e, r = { prependPath: !1 }) {
+  listFiles(e, t = { prependPath: !1 }) {
     if (!this.fileExists(e))
       return [];
     try {
-      const n = this[u].FS.readdir(e).filter(
+      const r = this[__private__dont__use].FS.readdir(e).filter(
         (s) => s !== "." && s !== ".."
       );
-      if (r.prependPath) {
+      if (t.prependPath) {
         const s = e.replace(/\/$/, "");
-        return n.map((o) => `${s}/${o}`);
+        return r.map((n) => `${s}/${n}`);
       }
-      return n;
-    } catch (n) {
-      return console.error(n, { path: e }), [];
+      return r;
+    } catch (r) {
+      return logger.error(r, { path: e }), [];
     }
   }
   isDir(e) {
-    return this.fileExists(e) ? this[u].FS.isDir(
-      this[u].FS.lookupPath(e).node.mode
+    return this.fileExists(e) ? this[__private__dont__use].FS.isDir(
+      this[__private__dont__use].FS.lookupPath(e).node.mode
     ) : !1;
   }
   fileExists(e) {
     try {
-      return this[u].FS.lookupPath(e), !0;
+      return this[__private__dont__use].FS.lookupPath(e), !0;
     } catch {
       return !1;
     }
   }
+  /**
+   * Hot-swaps the PHP runtime for a new one without
+   * interrupting the operations of this PHP instance.
+   *
+   * @param runtime
+   * @param cwd. Internal, the VFS path to recreate in the new runtime.
+   *             This arg is temporary and will be removed once BasePHP
+   *             is fully decoupled from the request handler and
+   *             accepts a constructor-level cwd argument.
+   */
+  hotSwapPHPRuntime(e, t) {
+    const r = this[__private__dont__use].FS;
+    try {
+      this.exit();
+    } catch {
+    }
+    this.initializeRuntime(e), d(this, E) && this.setPhpIniPath(d(this, E)), d(this, v) && this.setSapiName(d(this, v)), t && copyFS(r, this[__private__dont__use].FS, t);
+  }
+  exit(e = 0) {
+    this.dispatchEvent({
+      type: "runtime.beforedestroy"
+    });
+    try {
+      this[__private__dont__use]._exit(e);
+    } catch {
+    }
+    m(this, y, !1), m(this, w, null), delete this[__private__dont__use].onMessage, delete this[__private__dont__use];
+  }
+  [Symbol.dispose]() {
+    d(this, y) && this.exit(0);
+  }
 }
-w([
-  y('Could not create directory "{path}"')
-], m.prototype, "mkdir", 1);
-w([
-  y('Could not create directory "{path}"')
-], m.prototype, "mkdirTree", 1);
-w([
-  y('Could not read "{path}"')
-], m.prototype, "readFileAsText", 1);
-w([
-  y('Could not read "{path}"')
-], m.prototype, "readFileAsBuffer", 1);
-w([
-  y('Could not write to "{path}"')
-], m.prototype, "writeFile", 1);
-w([
-  y('Could not unlink "{path}"')
-], m.prototype, "unlink", 1);
-w([
-  y('Could not move "{path}"')
-], m.prototype, "mv", 1);
-w([
-  y('Could not remove directory "{path}"')
-], m.prototype, "rmdir", 1);
-w([
-  y('Could not list files in "{path}"')
-], m.prototype, "listFiles", 1);
-w([
-  y('Could not stat "{path}"')
-], m.prototype, "isDir", 1);
-w([
-  y('Could not stat "{path}"')
-], m.prototype, "fileExists", 1);
-function Q(t) {
-  const e = {};
-  for (const r in t)
-    e[r.toLowerCase()] = t[r];
-  return e;
+P = new WeakMap(), E = new WeakMap(), v = new WeakMap(), y = new WeakMap(), w = new WeakMap(), g = new WeakMap(), b = new WeakMap(), R = new WeakSet(), q = function(e, t, r) {
+  const s = {
+    ...e || {}
+  };
+  s.HTTPS = s.HTTPS || r === 443 ? "on" : "off";
+  for (const n in t) {
+    let o = "HTTP_";
+    ["content-type", "content-length"].includes(n.toLowerCase()) && (o = ""), s[`${o}${n.toUpperCase().replace(/-/g, "_")}`] = t[n];
+  }
+  return s;
+}, x = new WeakSet(), z = function() {
+  if (this.setPhpIniEntry("auto_prepend_file", "/internal/consts.php"), this.fileExists("/internal/consts.php") || this.writeFile(
+    "/internal/consts.php",
+    `<?php
+				if(file_exists('/internal/consts.json')) {
+					$consts = json_decode(file_get_contents('/internal/consts.json'), true);
+					foreach ($consts as $const => $value) {
+						if (!defined($const) && is_scalar($value)) {
+							define($const, $value);
+						}
+					}
+				}`
+  ), d(this, P).length > 0) {
+    const e = d(this, P).map(([t, r]) => `${t}=${r}`).join(`
+`) + `
+
+`;
+    this[__private__dont__use].ccall(
+      "wasm_set_phpini_entries",
+      null,
+      [STRING],
+      [e]
+    );
+  }
+  this[__private__dont__use].ccall("php_wasm_init", null, [], []);
+}, T = new WeakSet(), U = function() {
+  const e = "/internal/headers.json";
+  if (!this.fileExists(e))
+    throw new Error(
+      "SAPI Error: Could not find response headers file."
+    );
+  const t = JSON.parse(this.readFileAsText(e)), r = {};
+  for (const s of t.headers) {
+    if (!s.includes(": "))
+      continue;
+    const n = s.indexOf(": "), o = s.substring(0, n).toLowerCase(), i = s.substring(n + 2);
+    o in r || (r[o] = []), r[o].push(i);
+  }
+  return {
+    headers: r,
+    httpStatusCode: t.status
+  };
+}, k = new WeakSet(), $ = function(e) {
+  if (this[__private__dont__use].ccall(
+    "wasm_set_request_uri",
+    null,
+    [STRING],
+    [e]
+  ), e.includes("?")) {
+    const t = e.substring(e.indexOf("?") + 1);
+    this[__private__dont__use].ccall(
+      "wasm_set_query_string",
+      null,
+      [STRING],
+      [t]
+    );
+  }
+}, C = new WeakSet(), V = function(e) {
+  this[__private__dont__use].ccall(
+    "wasm_set_request_host",
+    null,
+    [STRING],
+    [e]
+  );
+}, F = new WeakSet(), G = function(e) {
+  this[__private__dont__use].ccall(
+    "wasm_set_request_port",
+    null,
+    [NUMBER],
+    [e]
+  );
+}, H = new WeakSet(), j = function(e, t) {
+  let r;
+  try {
+    r = parseInt(new URL(e).port, 10);
+  } catch {
+  }
+  return (!r || isNaN(r) || r === 80) && (r = t === "https" ? 443 : 80), r;
+}, M = new WeakSet(), J = function(e) {
+  this[__private__dont__use].ccall(
+    "wasm_set_request_method",
+    null,
+    [STRING],
+    [e]
+  );
+}, I = new WeakSet(), Q = function(e) {
+  e.cookie && this[__private__dont__use].ccall(
+    "wasm_set_cookies",
+    null,
+    [STRING],
+    [e.cookie]
+  ), e["content-type"] && this[__private__dont__use].ccall(
+    "wasm_set_content_type",
+    null,
+    [STRING],
+    [e["content-type"]]
+  ), e["content-length"] && this[__private__dont__use].ccall(
+    "wasm_set_content_length",
+    null,
+    [NUMBER],
+    [parseInt(e["content-length"], 10)]
+  );
+}, N = new WeakSet(), Y = function(e) {
+  let t, r;
+  typeof e == "string" ? (logger.warn(
+    "Passing a string as the request body is deprecated. Please use a Uint8Array instead. See https://github.com/WordPress/wordpress-playground/issues/997 for more details"
+  ), r = this[__private__dont__use].lengthBytesUTF8(e), t = r + 1) : (r = e.byteLength, t = e.byteLength);
+  const s = this[__private__dont__use].malloc(t);
+  if (!s)
+    throw new Error("Could not allocate memory for the request body.");
+  return typeof e == "string" ? this[__private__dont__use].stringToUTF8(
+    e,
+    s,
+    t + 1
+  ) : this[__private__dont__use].HEAPU8.set(e, s), this[__private__dont__use].ccall(
+    "wasm_set_request_body",
+    null,
+    [NUMBER],
+    [s]
+  ), this[__private__dont__use].ccall(
+    "wasm_set_content_length",
+    null,
+    [NUMBER],
+    [r]
+  ), s;
+}, A = new WeakSet(), Z = function(e) {
+  this[__private__dont__use].ccall(
+    "wasm_set_path_translated",
+    null,
+    [STRING],
+    [e]
+  );
+}, L = new WeakSet(), K = function(e, t) {
+  this[__private__dont__use].ccall(
+    "wasm_add_SERVER_entry",
+    null,
+    [STRING, STRING],
+    [e, t]
+  );
+}, O = new WeakSet(), X = function(e, t) {
+  this[__private__dont__use].ccall(
+    "wasm_add_ENV_entry",
+    null,
+    [STRING, STRING],
+    [e, t]
+  );
+}, W = new WeakSet(), ee = function(e) {
+  this[__private__dont__use].ccall(
+    "wasm_set_php_code",
+    null,
+    [STRING],
+    [e]
+  );
+}, B = new WeakSet(), te = async function() {
+  var n;
+  let e, t;
+  try {
+    e = await new Promise((o, i) => {
+      var l;
+      t = (c) => {
+        logger.error(c), logger.error(c.error);
+        const h = new Error("Rethrown");
+        h.cause = c.error, h.betterMessage = c.message, i(h);
+      }, (l = d(this, w)) == null || l.addEventListener(
+        "error",
+        t
+      );
+      const a = this[__private__dont__use].ccall(
+        "wasm_sapi_handle_request",
+        NUMBER,
+        [],
+        [],
+        { async: !0 }
+      );
+      return a instanceof Promise ? a.then(o, i) : o(a);
+    });
+  } catch (o) {
+    for (const c in this)
+      typeof this[c] == "function" && (this[c] = () => {
+        throw new Error(
+          "PHP runtime has crashed – see the earlier error for details."
+        );
+      });
+    this.functionsMaybeMissingFromAsyncify = getFunctionsMaybeMissingFromAsyncify();
+    const i = o, a = "betterMessage" in i ? i.betterMessage : i.message, l = new Error(a);
+    throw l.cause = i, logger.error(l), l;
+  } finally {
+    (n = d(this, w)) == null || n.removeEventListener("error", t);
+  }
+  const { headers: r, httpStatusCode: s } = p(this, T, U).call(this);
+  return new PHPResponse(
+    e === 0 ? s : 500,
+    r,
+    this.readFileAsBuffer("/internal/stdout"),
+    this.readFileAsText("/internal/stderr"),
+    e
+  );
+};
+__decorateClass([
+  rethrowFileSystemError('Could not create directory "{path}"')
+], BasePHP.prototype, "mkdir");
+__decorateClass([
+  rethrowFileSystemError('Could not create directory "{path}"')
+], BasePHP.prototype, "mkdirTree");
+__decorateClass([
+  rethrowFileSystemError('Could not read "{path}"')
+], BasePHP.prototype, "readFileAsText");
+__decorateClass([
+  rethrowFileSystemError('Could not read "{path}"')
+], BasePHP.prototype, "readFileAsBuffer");
+__decorateClass([
+  rethrowFileSystemError('Could not write to "{path}"')
+], BasePHP.prototype, "writeFile");
+__decorateClass([
+  rethrowFileSystemError('Could not unlink "{path}"')
+], BasePHP.prototype, "unlink");
+__decorateClass([
+  rethrowFileSystemError('Could not remove directory "{path}"')
+], BasePHP.prototype, "rmdir");
+__decorateClass([
+  rethrowFileSystemError('Could not list files in "{path}"')
+], BasePHP.prototype, "listFiles");
+__decorateClass([
+  rethrowFileSystemError('Could not stat "{path}"')
+], BasePHP.prototype, "isDir");
+__decorateClass([
+  rethrowFileSystemError('Could not stat "{path}"')
+], BasePHP.prototype, "fileExists");
+function normalizeHeaders(e) {
+  const t = {};
+  for (const r in e)
+    t[r.toLowerCase()] = e[r];
+  return t;
+}
+function copyFS(e, t, r) {
+  let s;
+  try {
+    s = e.lookupPath(r);
+  } catch {
+    return;
+  }
+  if (!("contents" in s.node))
+    return;
+  if (!e.isDir(s.node.mode)) {
+    t.writeFile(r, e.readFile(r));
+    return;
+  }
+  t.mkdirTree(r);
+  const n = e.readdir(r).filter((o) => o !== "." && o !== "..");
+  for (const o of n)
+    copyFS(e, t, joinPaths(r, o));
 }
 /**
  * @license
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-const X = Symbol("Comlink.proxy"), Fe = Symbol("Comlink.endpoint"), He = Symbol("Comlink.releaseProxy"), H = Symbol("Comlink.finalizer"), S = Symbol("Comlink.thrown"), Z = (t) => typeof t == "object" && t !== null || typeof t == "function", Oe = {
-  canHandle: (t) => Z(t) && t[X],
-  serialize(t) {
-    const { port1: e, port2: r } = new MessageChannel();
-    return F(t, e), [r, [r]];
+const proxyMarker = Symbol("Comlink.proxy"), createEndpoint = Symbol("Comlink.endpoint"), releaseProxy = Symbol("Comlink.releaseProxy"), finalizer = Symbol("Comlink.finalizer"), throwMarker = Symbol("Comlink.thrown"), isObject = (e) => typeof e == "object" && e !== null || typeof e == "function", proxyTransferHandler = {
+  canHandle: (e) => isObject(e) && e[proxyMarker],
+  serialize(e) {
+    const { port1: t, port2: r } = new MessageChannel();
+    return expose(e, t), [r, [r]];
   },
-  deserialize(t) {
-    return t.start(), U(t);
+  deserialize(e) {
+    return e.start(), wrap(e);
   }
-}, Me = {
-  canHandle: (t) => Z(t) && S in t,
-  serialize({ value: t }) {
-    let e;
-    return t instanceof Error ? e = {
+}, throwTransferHandler = {
+  canHandle: (e) => isObject(e) && throwMarker in e,
+  serialize({ value: e }) {
+    let t;
+    return e instanceof Error ? t = {
       isError: !0,
       value: {
-        message: t.message,
-        name: t.name,
-        stack: t.stack
+        message: e.message,
+        name: e.name,
+        stack: e.stack
       }
-    } : e = { isError: !1, value: t }, [e, []];
+    } : t = { isError: !1, value: e }, [t, []];
   },
-  deserialize(t) {
-    throw t.isError ? Object.assign(new Error(t.value.message), t.value) : t.value;
+  deserialize(e) {
+    throw e.isError ? Object.assign(new Error(e.value.message), e.value) : e.value;
   }
-}, v = /* @__PURE__ */ new Map([
-  ["proxy", Oe],
-  ["throw", Me]
+}, transferHandlers = /* @__PURE__ */ new Map([
+  ["proxy", proxyTransferHandler],
+  ["throw", throwTransferHandler]
 ]);
-function Ae(t, e) {
-  for (const r of t)
-    if (e === r || r === "*" || r instanceof RegExp && r.test(e))
+function isAllowedOrigin(e, t) {
+  for (const r of e)
+    if (t === r || r === "*" || r instanceof RegExp && r.test(t))
       return !0;
   return !1;
 }
-function F(t, e = globalThis, r = ["*"]) {
-  e.addEventListener("message", function n(s) {
-    if (!s || !s.data)
+function expose(e, t = globalThis, r = ["*"]) {
+  t.addEventListener("message", function s(n) {
+    if (!n || !n.data)
       return;
-    if (!Ae(r, s.origin)) {
-      console.warn(`Invalid origin '${s.origin}' for comlink proxy`);
+    if (!isAllowedOrigin(r, n.origin)) {
+      console.warn(`Invalid origin '${n.origin}' for comlink proxy`);
       return;
     }
-    const { id: o, type: i, path: c } = Object.assign({ path: [] }, s.data), l = (s.data.argumentList || []).map(P);
-    let a;
+    const { id: o, type: i, path: a } = Object.assign({ path: [] }, n.data), l = (n.data.argumentList || []).map(fromWireValue);
+    let c;
     try {
-      const h = c.slice(0, -1).reduce((p, k) => p[k], t), g = c.reduce((p, k) => p[k], t);
+      const h = a.slice(0, -1).reduce((f, S) => f[S], e), _ = a.reduce((f, S) => f[S], e);
       switch (i) {
         case "GET":
-          a = g;
+          c = _;
           break;
         case "SET":
-          h[c.slice(-1)[0]] = P(s.data.value), a = !0;
+          h[a.slice(-1)[0]] = fromWireValue(n.data.value), c = !0;
           break;
         case "APPLY":
-          a = g.apply(h, l);
+          c = _.apply(h, l);
           break;
         case "CONSTRUCT":
           {
-            const p = new g(...l);
-            a = ne(p);
+            const f = new _(...l);
+            c = proxy(f);
           }
           break;
         case "ENDPOINT":
           {
-            const { port1: p, port2: k } = new MessageChannel();
-            F(t, k), a = We(p, [p]);
+            const { port1: f, port2: S } = new MessageChannel();
+            expose(e, S), c = transfer(f, [f]);
           }
           break;
         case "RELEASE":
-          a = void 0;
+          c = void 0;
           break;
         default:
           return;
       }
     } catch (h) {
-      a = { value: h, [S]: 0 };
+      c = { value: h, [throwMarker]: 0 };
     }
-    Promise.resolve(a).catch((h) => ({ value: h, [S]: 0 })).then((h) => {
-      const [g, p] = C(h);
-      e.postMessage(Object.assign(Object.assign({}, g), { id: o }), p), i === "RELEASE" && (e.removeEventListener("message", n), ee(e), H in t && typeof t[H] == "function" && t[H]());
+    Promise.resolve(c).catch((h) => ({ value: h, [throwMarker]: 0 })).then((h) => {
+      const [_, f] = toWireValue(h);
+      t.postMessage(Object.assign(Object.assign({}, _), { id: o }), f), i === "RELEASE" && (t.removeEventListener("message", s), closeEndPoint(t), finalizer in e && typeof e[finalizer] == "function" && e[finalizer]());
     }).catch((h) => {
-      const [g, p] = C({
+      const [_, f] = toWireValue({
         value: new TypeError("Unserializable return value"),
-        [S]: 0
+        [throwMarker]: 0
       });
-      e.postMessage(Object.assign(Object.assign({}, g), { id: o }), p);
+      t.postMessage(Object.assign(Object.assign({}, _), { id: o }), f);
     });
-  }), e.start && e.start();
+  }), t.start && t.start();
 }
-function Le(t) {
-  return t.constructor.name === "MessagePort";
+function isMessagePort(e) {
+  return e.constructor.name === "MessagePort";
 }
-function ee(t) {
-  Le(t) && t.close();
+function closeEndPoint(e) {
+  isMessagePort(e) && e.close();
 }
-function U(t, e) {
-  return A(t, [], e);
+function wrap(e, t) {
+  return createProxy(e, [], t);
 }
-function x(t) {
-  if (t)
+function throwIfProxyReleased(e) {
+  if (e)
     throw new Error("Proxy has been released and is not useable");
 }
-function te(t) {
-  return R(t, {
+function releaseEndpoint(e) {
+  return requestResponseMessage(e, {
     type: "RELEASE"
   }).then(() => {
-    ee(t);
+    closeEndPoint(e);
   });
 }
-const T = /* @__PURE__ */ new WeakMap(), _ = "FinalizationRegistry" in globalThis && new FinalizationRegistry((t) => {
-  const e = (T.get(t) || 0) - 1;
-  T.set(t, e), e === 0 && te(t);
+const proxyCounter = /* @__PURE__ */ new WeakMap(), proxyFinalizers = "FinalizationRegistry" in globalThis && new FinalizationRegistry((e) => {
+  const t = (proxyCounter.get(e) || 0) - 1;
+  proxyCounter.set(e, t), t === 0 && releaseEndpoint(e);
 });
-function Ie(t, e) {
-  const r = (T.get(e) || 0) + 1;
-  T.set(e, r), _ && _.register(t, e, t);
+function registerProxy(e, t) {
+  const r = (proxyCounter.get(t) || 0) + 1;
+  proxyCounter.set(t, r), proxyFinalizers && proxyFinalizers.register(e, t, e);
 }
-function Ue(t) {
-  _ && _.unregister(t);
+function unregisterProxy(e) {
+  proxyFinalizers && proxyFinalizers.unregister(e);
 }
-function A(t, e = [], r = function() {
+function createProxy(e, t = [], r = function() {
 }) {
-  let n = !1;
-  const s = new Proxy(r, {
+  let s = !1;
+  const n = new Proxy(r, {
     get(o, i) {
-      if (x(n), i === He)
+      if (throwIfProxyReleased(s), i === releaseProxy)
         return () => {
-          Ue(s), te(t), n = !0;
+          unregisterProxy(n), releaseEndpoint(e), s = !0;
         };
       if (i === "then") {
-        if (e.length === 0)
-          return { then: () => s };
-        const c = R(t, {
+        if (t.length === 0)
+          return { then: () => n };
+        const a = requestResponseMessage(e, {
           type: "GET",
-          path: e.map((l) => l.toString())
-        }).then(P);
-        return c.then.bind(c);
+          path: t.map((l) => l.toString())
+        }).then(fromWireValue);
+        return a.then.bind(a);
       }
-      return A(t, [...e, i]);
+      return createProxy(e, [...t, i]);
     },
-    set(o, i, c) {
-      x(n);
-      const [l, a] = C(c);
-      return R(t, {
+    set(o, i, a) {
+      throwIfProxyReleased(s);
+      const [l, c] = toWireValue(a);
+      return requestResponseMessage(e, {
         type: "SET",
-        path: [...e, i].map((h) => h.toString()),
+        path: [...t, i].map((h) => h.toString()),
         value: l
-      }, a).then(P);
+      }, c).then(fromWireValue);
     },
-    apply(o, i, c) {
-      x(n);
-      const l = e[e.length - 1];
-      if (l === Fe)
-        return R(t, {
+    apply(o, i, a) {
+      throwIfProxyReleased(s);
+      const l = t[t.length - 1];
+      if (l === createEndpoint)
+        return requestResponseMessage(e, {
           type: "ENDPOINT"
-        }).then(P);
+        }).then(fromWireValue);
       if (l === "bind")
-        return A(t, e.slice(0, -1));
-      const [a, h] = J(c);
-      return R(t, {
+        return createProxy(e, t.slice(0, -1));
+      const [c, h] = processArguments(a);
+      return requestResponseMessage(e, {
         type: "APPLY",
-        path: e.map((g) => g.toString()),
-        argumentList: a
-      }, h).then(P);
+        path: t.map((_) => _.toString()),
+        argumentList: c
+      }, h).then(fromWireValue);
     },
     construct(o, i) {
-      x(n);
-      const [c, l] = J(i);
-      return R(t, {
+      throwIfProxyReleased(s);
+      const [a, l] = processArguments(i);
+      return requestResponseMessage(e, {
         type: "CONSTRUCT",
-        path: e.map((a) => a.toString()),
-        argumentList: c
-      }, l).then(P);
+        path: t.map((c) => c.toString()),
+        argumentList: a
+      }, l).then(fromWireValue);
     }
   });
-  return Ie(s, t), s;
+  return registerProxy(n, e), n;
 }
-function Ne(t) {
-  return Array.prototype.concat.apply([], t);
+function myFlat(e) {
+  return Array.prototype.concat.apply([], e);
 }
-function J(t) {
-  const e = t.map(C);
-  return [e.map((r) => r[0]), Ne(e.map((r) => r[1]))];
+function processArguments(e) {
+  const t = e.map(toWireValue);
+  return [t.map((r) => r[0]), myFlat(t.map((r) => r[1]))];
 }
-const re = /* @__PURE__ */ new WeakMap();
-function We(t, e) {
-  return re.set(t, e), t;
+const transferCache = /* @__PURE__ */ new WeakMap();
+function transfer(e, t) {
+  return transferCache.set(e, t), e;
 }
-function ne(t) {
-  return Object.assign(t, { [X]: !0 });
+function proxy(e) {
+  return Object.assign(e, { [proxyMarker]: !0 });
 }
-function se(t, e = globalThis, r = "*") {
+function windowEndpoint(e, t = globalThis, r = "*") {
   return {
-    postMessage: (n, s) => t.postMessage(n, r, s),
-    addEventListener: e.addEventListener.bind(e),
-    removeEventListener: e.removeEventListener.bind(e)
+    postMessage: (s, n) => e.postMessage(s, r, n),
+    addEventListener: t.addEventListener.bind(t),
+    removeEventListener: t.removeEventListener.bind(t)
   };
 }
-function C(t) {
-  for (const [e, r] of v)
-    if (r.canHandle(t)) {
-      const [n, s] = r.serialize(t);
+function toWireValue(e) {
+  for (const [t, r] of transferHandlers)
+    if (r.canHandle(e)) {
+      const [s, n] = r.serialize(e);
       return [
         {
           type: "HANDLER",
-          name: e,
-          value: n
+          name: t,
+          value: s
         },
-        s
+        n
       ];
     }
   return [
     {
       type: "RAW",
-      value: t
+      value: e
     },
-    re.get(t) || []
+    transferCache.get(e) || []
   ];
 }
-function P(t) {
-  switch (t.type) {
+function fromWireValue(e) {
+  switch (e.type) {
     case "HANDLER":
-      return v.get(t.name).deserialize(t.value);
+      return transferHandlers.get(e.name).deserialize(e.value);
     case "RAW":
-      return t.value;
+      return e.value;
   }
 }
-function R(t, e, r) {
-  return new Promise((n) => {
-    const s = $e();
-    t.addEventListener("message", function o(i) {
-      !i.data || !i.data.id || i.data.id !== s || (t.removeEventListener("message", o), n(i.data));
-    }), t.start && t.start(), t.postMessage(Object.assign({ id: s }, e), r);
+function requestResponseMessage(e, t, r) {
+  return new Promise((s) => {
+    const n = generateUUID();
+    e.addEventListener("message", function o(i) {
+      !i.data || !i.data.id || i.data.id !== n || (e.removeEventListener("message", o), s(i.data));
+    }), e.start && e.start(), e.postMessage(Object.assign({ id: n }, t), r);
   });
 }
-function $e() {
+function generateUUID() {
   return new Array(4).fill(0).map(() => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).join("-");
 }
-function Ge(t) {
-  ie();
-  const e = t instanceof Worker ? t : se(t), r = U(e), n = N(r);
+function consumeAPI(e, t = void 0) {
+  setupTransferHandlers();
+  const r = e instanceof Worker ? e : windowEndpoint(e, t), s = wrap(r), n = proxyClone(s);
   return new Proxy(n, {
-    get: (s, o) => o === "isConnected" ? async () => {
-      for (let i = 0; i < 10; i++)
+    get: (o, i) => i === "isConnected" ? async () => {
+      for (; ; )
         try {
-          await De(r.isConnected(), 200);
+          await runWithTimeout(s.isConnected(), 200);
           break;
         } catch {
         }
-    } : r[o]
+    } : s[i]
   });
 }
-async function De(t, e) {
-  return new Promise((r, n) => {
-    setTimeout(n, e), t.then(r);
+async function runWithTimeout(e, t) {
+  return new Promise((r, s) => {
+    setTimeout(s, t), e.then(r);
   });
 }
-function Ve(t, e) {
-  ie();
+function exposeAPI(e, t) {
+  setupTransferHandlers();
   const r = Promise.resolve();
-  let n, s;
-  const o = new Promise((l, a) => {
-    n = l, s = a;
-  }), i = N(t), c = new Proxy(i, {
-    get: (l, a) => a === "isConnected" ? () => r : a === "isReady" ? () => o : a in l ? l[a] : e?.[a]
+  let s, n;
+  const o = new Promise((l, c) => {
+    s = l, n = c;
+  }), i = proxyClone(e), a = new Proxy(i, {
+    get: (l, c) => c === "isConnected" ? () => r : c === "isReady" ? () => o : c in l ? l[c] : t == null ? void 0 : t[c]
   });
-  return F(
-    c,
-    typeof window < "u" ? se(self.parent) : void 0
-  ), [n, s, c];
+  return expose(
+    a,
+    typeof window < "u" ? windowEndpoint(self.parent) : void 0
+  ), [s, n, a];
 }
-let K = !1;
-function ie() {
-  K || (K = !0, v.set("EVENT", {
-    canHandle: (t) => t instanceof CustomEvent,
-    serialize: (t) => [
+let isTransferHandlersSetup = !1;
+function setupTransferHandlers() {
+  if (isTransferHandlersSetup)
+    return;
+  isTransferHandlersSetup = !0, transferHandlers.set("EVENT", {
+    canHandle: (r) => r instanceof CustomEvent,
+    serialize: (r) => [
       {
-        detail: t.detail
+        detail: r.detail
       },
       []
     ],
-    deserialize: (t) => t
-  }), v.set("FUNCTION", {
-    canHandle: (t) => typeof t == "function",
-    serialize(t) {
-      console.debug("[Comlink][Performance] Proxying a function");
-      const { port1: e, port2: r } = new MessageChannel();
-      return F(t, e), [r, [r]];
+    deserialize: (r) => r
+  }), transferHandlers.set("FUNCTION", {
+    canHandle: (r) => typeof r == "function",
+    serialize(r) {
+      logger.debug("[Comlink][Performance] Proxying a function");
+      const { port1: s, port2: n } = new MessageChannel();
+      return expose(r, s), [n, [n]];
     },
-    deserialize(t) {
-      return t.start(), U(t);
+    deserialize(r) {
+      return r.start(), wrap(r);
     }
-  }), v.set("PHPResponse", {
-    canHandle: (t) => typeof t == "object" && t !== null && "headers" in t && "bytes" in t && "errors" in t && "exitCode" in t && "httpStatusCode" in t,
-    serialize(t) {
-      return [t.toRawData(), []];
+  }), transferHandlers.set("PHPResponse", {
+    canHandle: (r) => typeof r == "object" && r !== null && "headers" in r && "bytes" in r && "errors" in r && "exitCode" in r && "httpStatusCode" in r,
+    serialize(r) {
+      return [r.toRawData(), []];
     },
-    deserialize(t) {
-      return b.fromRawData(t);
+    deserialize(r) {
+      return PHPResponse.fromRawData(r);
     }
-  }));
+  });
+  const e = transferHandlers.get("throw"), t = e == null ? void 0 : e.serialize;
+  e.serialize = ({ value: r }) => {
+    const s = t({ value: r });
+    return r.response && (s[0].value.response = r.response), r.source && (s[0].value.source = r.source), s;
+  };
 }
-function N(t) {
-  return new Proxy(t, {
-    get(e, r) {
-      switch (typeof e[r]) {
+function proxyClone(e) {
+  return new Proxy(e, {
+    get(t, r) {
+      switch (typeof t[r]) {
         case "function":
-          return (...n) => e[r](...n);
+          return (...s) => t[r](...s);
         case "object":
-          return e[r] === null ? e[r] : N(e[r]);
+          return t[r] === null ? t[r] : proxyClone(t[r]);
         case "undefined":
         case "number":
         case "string":
-          return e[r];
+          return t[r];
         default:
-          return ne(e[r]);
+          return proxy(t[r]);
       }
     }
   });
 }
-async function qe(t = ye) {
-  switch (t) {
-    case "8.2":
-      return await import('./php_8_2-9BV6JknT.js');
-    case "8.1":
-      return await import('./php_8_1-4mMavl2k.js');
-    case "8.0":
-      return await import('./php_8_0-M8LiOTK4.js');
-    case "7.4":
-      return await import('./php_7_4-ZmvdB2yG.js');
-    case "7.3":
-      return await import('./php_7_3-5nlg_Y-Z.js');
-    case "7.2":
-      return await import('./php_7_2-Odv_6UUg.js');
-    case "7.1":
-      return await import('./php_7_1-FTKONDnf.js');
-    case "7.0":
-      return await import('./php_7_0-J_AglRxN.js');
-    case "5.6":
-      return await import('./php_5_6-qdkUaVE8.js');
-  }
-  throw new Error(`Unsupported PHP version ${t}`);
+async function getPHPLoaderModule(e = LatestSupportedPHPVersion, t = "light") {
+  if (t === "kitchen-sink")
+    switch (e) {
+      case "8.3":
+        return await import('./php_8_3-BaS8ixKS.js');
+      case "8.2":
+        return await import('./php_8_2-BJZDDTr3.js');
+      case "8.1":
+        return await import('./php_8_1-BRFzcfrX.js');
+      case "8.0":
+        return await import('./php_8_0-CpIHYA6Q.js');
+      case "7.4":
+        return await import('./php_7_4-CFtsuoWS.js');
+      case "7.3":
+        return await import('./php_7_3-5tJ_745b.js');
+      case "7.2":
+        return await import('./php_7_2-DDj6gipw.js');
+      case "7.1":
+        return await import('./php_7_1-Bi6jZCCU.js');
+      case "7.0":
+        return await import('./php_7_0-BCgtxH-k.js');
+    }
+  else
+    switch (e) {
+      case "8.3":
+        return await import('./php_8_3-36mKQoFz.js');
+      case "8.2":
+        return await import('./php_8_2-CwDEUCLS.js');
+      case "8.1":
+        return await import('./php_8_1-DVoz9hfN.js');
+      case "8.0":
+        return await import('./php_8_0-WykHad7g.js');
+      case "7.4":
+        return await import('./php_7_4-o_L-LpOE.js');
+      case "7.3":
+        return await import('./php_7_3-BI1zLDSY.js');
+      case "7.2":
+        return await import('./php_7_2-BBe4NGCd.js');
+      case "7.1":
+        return await import('./php_7_1-CbJWGLeL.js');
+      case "7.0":
+        return await import('./php_7_0-CIM2eDyA.js');
+    }
+  throw new Error(`Unsupported PHP version ${e}`);
 }
-const ze = () => ({
+const fakeWebsocket = () => ({
   websocket: {
-    decorator: (t) => class extends t {
+    decorator: (e) => class extends e {
       constructor() {
         try {
           super();
@@ -1442,7 +1744,7 @@ const ze = () => ({
     }
   }
 });
-class L extends m {
+class WebPHP extends BasePHP {
   /**
    * Creates a new PHP instance.
    *
@@ -1455,186 +1757,204 @@ class L extends m {
    * @param options The options to use when loading PHP
    * @returns A new PHP instance
    */
-  static async load(e, r = {}) {
-    return await L.loadSync(e, r).phpReady;
+  static async load(t, r = {}) {
+    return new WebPHP(await WebPHP.loadRuntime(t, r));
   }
-  /**
-   * Does what load() does, but synchronously returns
-   * an object with the PHP instance and a promise that
-   * resolves when the PHP instance is ready.
-   *
-   * @see load
-   */
-  static loadSync(e, r = {}) {
-    const n = new L(void 0, r.requestHandler), o = (async () => {
-      const i = await Promise.all([
-        qe(e),
-        ...r.dataModules || []
-      ]), [c, ...l] = i;
-      r.downloadMonitor?.setModules(i);
-      const a = await xe(
-        c,
-        {
-          ...r.emscriptenOptions || {},
-          ...r.downloadMonitor?.getEmscriptenOptions() || {},
-          ...ze()
-        },
-        l
-      );
-      n.initializeRuntime(a);
-    })();
-    return {
-      php: n,
-      phpReady: o.then(() => n)
-    };
+  static async loadRuntime(t, r = {}) {
+    var o;
+    const s = r.loadAllExtensions ? "kitchen-sink" : "light", n = await getPHPLoaderModule(t, s);
+    return (o = r.onPhpLoaderModuleLoaded) == null || o.call(r, n), await loadPHPRuntime(n, {
+      ...r.emscriptenOptions || {},
+      ...fakeWebsocket()
+    });
   }
 }
-const d = /* @__PURE__ */ new WeakMap();
-class Je {
+const _private = /* @__PURE__ */ new WeakMap();
+class WebPHPEndpoint {
   /** @inheritDoc */
-  constructor(e, r) {
-    d.set(this, {
-      php: e,
-      monitor: r
-    }), this.absoluteUrl = e.absoluteUrl, this.documentRoot = e.documentRoot;
+  constructor(t, r) {
+    _private.set(this, {
+      monitor: r,
+      requestHandler: t
+    }), this.absoluteUrl = t.absoluteUrl, this.documentRoot = t.documentRoot;
   }
-  /** @inheritDoc @php-wasm/universal!RequestHandler.pathToInternalUrl  */
-  pathToInternalUrl(e) {
-    return d.get(this).php.pathToInternalUrl(e);
+  /**
+   * @internal
+   * @deprecated
+   * Do not use this method directly in the code consuming
+   * the web API. It will change or even be removed without
+   * a warning.
+   */
+  __internal_getPHP() {
+    return _private.get(this).php;
   }
-  /** @inheritDoc @php-wasm/universal!RequestHandler.internalUrlToPath  */
-  internalUrlToPath(e) {
-    return d.get(this).php.internalUrlToPath(e);
+  async setPrimaryPHP(t) {
+    _private.set(this, {
+      ..._private.get(this),
+      php: t
+    });
+  }
+  /** @inheritDoc @php-wasm/universal!PHPRequestHandler.pathToInternalUrl  */
+  pathToInternalUrl(t) {
+    return _private.get(this).requestHandler.pathToInternalUrl(t);
+  }
+  /** @inheritDoc @php-wasm/universal!PHPRequestHandler.internalUrlToPath  */
+  internalUrlToPath(t) {
+    return _private.get(this).requestHandler.internalUrlToPath(t);
   }
   /**
    * The onDownloadProgress event listener.
    */
-  async onDownloadProgress(e) {
-    return d.get(this).monitor?.addEventListener("progress", e);
+  async onDownloadProgress(t) {
+    var r;
+    return (r = _private.get(this).monitor) == null ? void 0 : r.addEventListener("progress", t);
   }
   /** @inheritDoc @php-wasm/universal!IsomorphicLocalPHP.mv  */
-  mv(e, r) {
-    return d.get(this).php.mv(e, r);
+  async mv(t, r) {
+    return _private.get(this).php.mv(t, r);
   }
   /** @inheritDoc @php-wasm/universal!IsomorphicLocalPHP.rmdir  */
-  rmdir(e, r) {
-    return d.get(this).php.rmdir(e, r);
+  async rmdir(t, r) {
+    return _private.get(this).php.rmdir(t, r);
   }
-  /** @inheritDoc @php-wasm/universal!RequestHandler.request */
-  request(e, r) {
-    return d.get(this).php.request(e, r);
+  /** @inheritDoc @php-wasm/universal!PHPRequestHandler.request */
+  async request(t) {
+    return await _private.get(this).requestHandler.request(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.run */
-  async run(e) {
-    return d.get(this).php.run(e);
+  async run(t) {
+    const { php: r, reap: s } = await _private.get(this).requestHandler.processManager.acquirePHPInstance();
+    try {
+      return await r.run(t);
+    } finally {
+      s();
+    }
   }
   /** @inheritDoc @php-wasm/web!WebPHP.chdir */
-  chdir(e) {
-    return d.get(this).php.chdir(e);
+  chdir(t) {
+    return _private.get(this).php.chdir(t);
+  }
+  /** @inheritDoc @php-wasm/web!WebPHP.setSapiName */
+  setSapiName(t) {
+    _private.get(this).php.setSapiName(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.setPhpIniPath */
-  setPhpIniPath(e) {
-    return d.get(this).php.setPhpIniPath(e);
+  setPhpIniPath(t) {
+    return _private.get(this).php.setPhpIniPath(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.setPhpIniEntry */
-  setPhpIniEntry(e, r) {
-    return d.get(this).php.setPhpIniEntry(e, r);
+  setPhpIniEntry(t, r) {
+    return _private.get(this).php.setPhpIniEntry(t, r);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.mkdir */
-  mkdir(e) {
-    return d.get(this).php.mkdir(e);
+  mkdir(t) {
+    return _private.get(this).php.mkdir(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.mkdirTree */
-  mkdirTree(e) {
-    return d.get(this).php.mkdirTree(e);
+  mkdirTree(t) {
+    return _private.get(this).php.mkdirTree(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.readFileAsText */
-  readFileAsText(e) {
-    return d.get(this).php.readFileAsText(e);
+  readFileAsText(t) {
+    return _private.get(this).php.readFileAsText(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.readFileAsBuffer */
-  readFileAsBuffer(e) {
-    return d.get(this).php.readFileAsBuffer(e);
+  readFileAsBuffer(t) {
+    return _private.get(this).php.readFileAsBuffer(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.writeFile */
-  writeFile(e, r) {
-    return d.get(this).php.writeFile(e, r);
+  writeFile(t, r) {
+    return _private.get(this).php.writeFile(t, r);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.unlink */
-  unlink(e) {
-    return d.get(this).php.unlink(e);
+  unlink(t) {
+    return _private.get(this).php.unlink(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.listFiles */
-  listFiles(e, r) {
-    return d.get(this).php.listFiles(e, r);
+  listFiles(t, r) {
+    return _private.get(this).php.listFiles(t, r);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.isDir */
-  isDir(e) {
-    return d.get(this).php.isDir(e);
+  isDir(t) {
+    return _private.get(this).php.isDir(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.fileExists */
-  fileExists(e) {
-    return d.get(this).php.fileExists(e);
+  fileExists(t) {
+    return _private.get(this).php.fileExists(t);
   }
   /** @inheritDoc @php-wasm/web!WebPHP.onMessage */
-  onMessage(e) {
-    d.get(this).php.onMessage(e);
+  onMessage(t) {
+    _private.get(this).php.onMessage(t);
+  }
+  /** @inheritDoc @php-wasm/web!WebPHP.defineConstant */
+  defineConstant(t, r) {
+    _private.get(this).php.defineConstant(t, r);
+  }
+  /** @inheritDoc @php-wasm/web!WebPHP.addEventListener */
+  addEventListener(t, r) {
+    _private.get(this).php.addEventListener(t, r);
+  }
+  /** @inheritDoc @php-wasm/web!WebPHP.removeEventListener */
+  removeEventListener(t, r) {
+    _private.get(this).php.removeEventListener(t, r);
   }
 }
-function Be(t, e) {
+function responseTo(e, t) {
   return {
     type: "response",
-    requestId: t,
-    response: e
+    requestId: e,
+    response: t
   };
 }
-async function Ke(t, e, r) {
-  const n = navigator.serviceWorker;
-  if (!n)
-    throw new Error("Service workers are not supported in this browser.");
-  console.debug("[window][sw] Registering a Service Worker"), await (await n.register(r, {
+async function registerServiceWorker(e, t, r) {
+  const s = navigator.serviceWorker;
+  if (!s)
+    throw window.isSecureContext ? new PhpWasmError(
+      "Service workers are not supported in your browser."
+    ) : new PhpWasmError(
+      "WordPress Playground uses service workers and may only work on HTTPS and http://localhost/ sites, but the current site is neither."
+    );
+  logger.debug("[window][sw] Registering a Service Worker"), await (await s.register(r, {
     type: "module",
     // Always bypass HTTP cache when fetching the new Service Worker script:
     updateViaCache: "none"
   })).update(), navigator.serviceWorker.addEventListener(
     "message",
     async function(i) {
-      if (console.debug("[window][sw] Message from ServiceWorker", i), e && i.data.scope !== e)
+      if (t && i.data.scope !== t)
         return;
-      const c = i.data.args || [], l = i.data.method, a = await t[l](...c);
-      i.source.postMessage(Be(i.data.requestId, a));
+      const a = i.data.args || [], l = i.data.method, c = await e[l](...a);
+      i.source.postMessage(responseTo(i.data.requestId, c));
     }
-  ), n.startMessages();
+  ), s.startMessages();
 }
-function Qe() {
-  const t = {};
-  return typeof self?.location?.href < "u" && new URL(self.location.href).searchParams.forEach((r, n) => {
-    t[n] = r;
-  }), t;
-}
-async function Xe(t, e = {}) {
-  t = je(t, e);
-  const r = new Worker(t, { type: "module" });
-  return new Promise((n, s) => {
+async function spawnPHPWorkerThread(e, t = {}) {
+  e = addQueryParams(e, t);
+  const r = new Worker(e, { type: "module" });
+  return new Promise((s, n) => {
     r.onerror = (i) => {
-      const c = new Error(
-        `WebWorker failed to load at ${t}. ${i.message ? `Original error: ${i.message}` : ""}`
+      const a = new Error(
+        `WebWorker failed to load at ${e}. ${i.message ? `Original error: ${i.message}` : ""}`
       );
-      c.filename = i.filename, s(c);
+      a.filename = i.filename, n(a);
     };
     function o(i) {
-      i.data === "worker-script-started" && (n(r), r.removeEventListener("message", o));
+      i.data === "worker-script-started" && (s(r), r.removeEventListener("message", o));
     }
     r.addEventListener("message", o);
   });
 }
-function je(t, e) {
-  if (!Object.entries(e).length)
-    return t + "";
-  const r = new URL(t);
-  for (const [n, s] of Object.entries(e))
-    r.searchParams.set(n, s);
+function addQueryParams(e, t) {
+  if (!Object.entries(t).length)
+    return e + "";
+  const r = new URL(e);
+  for (const [s, n] of Object.entries(t))
+    if (Array.isArray(n))
+      for (const o of n)
+        r.searchParams.append(s, o);
+    else
+      r.searchParams.set(s, n);
   return r.toString();
 }
 
-export { L as WebPHP, Je as WebPHPEndpoint, Ge as consumeAPI, Ve as exposeAPI, qe as getPHPLoaderModule, Qe as parseWorkerStartupOptions, Ke as registerServiceWorker, Xe as spawnPHPWorkerThread };
+export { WebPHP, WebPHPEndpoint, consumeAPI, exposeAPI, getPHPLoaderModule, registerServiceWorker, spawnPHPWorkerThread };
