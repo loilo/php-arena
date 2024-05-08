@@ -29,6 +29,11 @@ export async function format(
     insertPragma?: boolean
   },
 ) {
+  // Prettier does not support PHP 8.3 yet
+  if (phpVersion === '8.3') {
+    phpVersion = '8.2'
+  }
+
   const parseOptions = {
     phpVersion,
     printWidth,
