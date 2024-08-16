@@ -42,7 +42,7 @@
     "@php-wasm/web": "^0.7.19",
     "@prettier/plugin-php": "^0.22.2",
     "@vueuse/math": "^11.0.0",
-    "@vueuse/nuxt": "^10.9.0",
+    "@vueuse/nuxt": "^11.0.0",
     "install": "^0.13.0",
     "lz-string": "^1.5.0"
   }
