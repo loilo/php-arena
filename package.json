@@ -21,7 +21,7 @@
     "fs-extra": "^11.2.0",
     "nuxt": "^3.11.2",
     "nuxt-headlessui": "^1.2.0",
-    "pinia": "^2.1.7",
+    "pinia": "^3.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "rollup": "^4.17.2",
