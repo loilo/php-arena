@@ -39,7 +39,7 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/view": "^6.26.3",
     "@nuxtjs/color-mode": "^3.4.1",
-    "@php-wasm/web": "^1.0.2",
+    "@php-wasm/web": "^3.0.22",
     "@prettier/plugin-php": "^0.22.2",
     "@vueuse/math": "^14.0.0",
     "@vueuse/nuxt": "^14.0.0",
