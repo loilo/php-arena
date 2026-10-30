@@ -20,15 +20,26 @@ addEventListener('message', async event => {
   try {
     result = await evaluate(engine, data.code, setupFunction)
   } catch (error) {
-    const message = String((error as any).message ?? error)
+    const failure =
+      typeof error === 'object' && error !== null
+        ? (error as {
+            message?: unknown
+            response?: { errors?: unknown }
+          })
+        : undefined
+    const stderr = failure?.response?.errors
+    const message = String(failure?.message ?? error)
     const errorIdentifier = 'the following output: '
-    if (message.includes(errorIdentifier)) {
-      result = message
-        .slice(message.indexOf(errorIdentifier) + errorIdentifier.length)
-        .replaceAll('/arena/index.php', 'PHP Arena code')
-    } else {
-      result = message
-    }
+    const stderrIdentifier = '=== Stderr ==='
+    result =
+      typeof stderr === 'string' && stderr.trim()
+        ? stderr.trim()
+        : message.includes(errorIdentifier)
+          ? message.slice(message.indexOf(errorIdentifier) + errorIdentifier.length)
+          : message.includes(stderrIdentifier)
+            ? message.slice(message.indexOf(stderrIdentifier) + stderrIdentifier.length)
+            : message
+    result = result.replaceAll('/arena/index.php', 'PHP Arena code')
   }
 
   postMessage({
