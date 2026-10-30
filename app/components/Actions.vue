@@ -94,7 +94,14 @@ function share() {
         highlight
         label="Format"
         icon="wand"
-        :disabled="inputCodeStore.state.length === 0"
+        :disabled="
+          inputCodeStore.state.length === 0 || phpVersionStore.state === '8.5'
+        "
+        :title="
+          phpVersionStore.state === '8.5'
+            ? 'Formatting not available for PHP 8.5'
+            : undefined
+        "
         :shortcut="{ key: 'Digit4', label: '4' }"
       />
       <IconButton
@@ -113,15 +120,15 @@ function share() {
           themeStore.auto
             ? 'System'
             : themeStore.theme === 'dark'
-            ? 'Dark Mode'
-            : 'Light Mode'
+              ? 'Dark Mode'
+              : 'Light Mode'
         "
         :icon="
           themeStore.auto
             ? 'screen'
             : themeStore.theme === 'dark'
-            ? 'moon'
-            : 'sun'
+              ? 'moon'
+              : 'sun'
         "
         :shortcut="{ key: 'Digit6', label: '6' }"
       />
