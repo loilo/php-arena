@@ -1,6 +1,6 @@
 export const useEvaluationWorkerStore = defineStore('evaluation-worker', () => {
   const worker = new Worker(
-    new URL('../util/evaluation-worker/evaluation-worker', import.meta.url),
+    new URL('../utils/evaluation-worker/evaluation-worker', import.meta.url),
     {
       type: 'module',
     },

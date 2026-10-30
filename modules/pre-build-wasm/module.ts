@@ -9,10 +9,13 @@ import { build } from 'vite'
 export default defineNuxtModule({
   async setup(_options, nuxt) {
     nuxt.hook('ready', async () => {
-      const target = path.join(
+      const publicDir = path.isAbsolute(nuxt.options.dir.public)
+        ? nuxt.options.dir.public
+        : path.join(nuxt.options.rootDir, nuxt.options.dir.public)
+      const target = path.join(publicDir, 'php-wasm')
+      const entry = path.join(
         nuxt.options.rootDir,
-        nuxt.options.dir.public,
-        'php-wasm',
+        'modules/pre-build-wasm/entry.js',
       )
 
       await build({
@@ -28,10 +31,7 @@ export default defineNuxtModule({
           modulePreload: false,
           rollupOptions: {
             preserveEntrySignatures: 'strict',
-            input: path.join(
-              nuxt.options.rootDir,
-              'modules/pre-build-wasm/entry.ts',
-            ),
+            input: entry,
             output: {
               format: 'es',
               entryFileNames: 'index.js',

@@ -1,6 +1,6 @@
 export const useFormattingWorkerStore = defineStore('formatting-worker', () => {
   const worker = new Worker(
-    new URL('../util/formatting-worker/formatting-worker', import.meta.url),
+    new URL('../utils/formatting-worker/formatting-worker', import.meta.url),
     {
       type: 'module',
     },

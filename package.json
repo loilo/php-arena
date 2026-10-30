@@ -1,6 +1,7 @@
 {
   "name": "nuxt-app",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=24.18.0",
     "npm": ">=11.16.0"
@@ -19,7 +20,7 @@
     "@tailwindcss/typography": "^0.5.13",
     "@types/node": "^26.0.0",
     "@vite-pwa/nuxt": "^1.0.0",
-    "nuxt": "^3.21.11",
+    "nuxt": "^4.0.0",
     "nuxt-headlessui": "^1.2.0",
     "pinia": "^3.0.4",
     "prettier": "^3.2.5",
