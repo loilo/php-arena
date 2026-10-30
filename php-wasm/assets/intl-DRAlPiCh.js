@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-CUx5vSaa.so`;export{e as default};

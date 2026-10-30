@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-ZuZnBC_c.so`;export{e as default};

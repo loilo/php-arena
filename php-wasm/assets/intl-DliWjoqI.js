@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-DIoDy_DE.so`;export{e as default};

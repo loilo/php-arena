@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-BeZenS9-.so`;export{e as default};

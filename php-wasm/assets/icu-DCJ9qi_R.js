@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/icu-_xyRJXmL.dat`;export{e as default};

@@ -1,0 +1,1 @@
+import{n as e,t}from"./esm-BJLQqNPW.js";async function n(){return await t()?await e(()=>import(`./php_5_2-BmTOgnAs.js`),[]):await e(()=>import(`./php_5_2-PjqKef9n.js`),[])}export{n as getPHPLoaderModule};

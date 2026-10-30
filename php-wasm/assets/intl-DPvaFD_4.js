@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-CcP3MNK3.so`;export{e as default};

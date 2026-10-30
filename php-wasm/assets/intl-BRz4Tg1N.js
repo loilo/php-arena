@@ -1,0 +1,1 @@
+var e=`/php-arena/php-wasm/assets/intl-Dt3a6eaf.so`;export{e as default};
