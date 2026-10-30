@@ -1,4 +1,7 @@
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import {
+  SupportedPHPVersions,
+  type SupportedPHPVersion,
+} from '@php-wasm/universal'
 
 export type WorkerMessage = {
   id: string
@@ -45,11 +48,7 @@ export function validateMessage(
     throw new Error('Invalid message payload: baseUrl')
   }
 
-  if (
-    !['7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3'].includes(
-      message.version as string,
-    )
-  ) {
+  if (!SupportedPHPVersions.includes(message.version as SupportedPHPVersion)) {
     throw new Error('Invalid PHP version')
   }
 }

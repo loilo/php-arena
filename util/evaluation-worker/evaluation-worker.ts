@@ -4,7 +4,8 @@ import {
   getCachedPhpEngine,
   getCachedComposerSetupFunction,
 } from './evaluation-tools'
-import { EvaluationWorkerResponse, validateMessage } from './evaluation-utils'
+import { validateMessage } from './evaluation-utils'
+import type { EvaluationWorkerResponse } from './evaluation-utils'
 
 addEventListener('message', async event => {
   const data = event.data

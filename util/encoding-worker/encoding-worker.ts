@@ -1,9 +1,9 @@
 // Handle the actual LZ encoding/decoding
 import { encode, decode } from './encoding-tools'
-import {
+import { validateMessage } from './encoding-utils'
+import type {
   DecodingWorkerResponse,
   EncodingWorkerResponse,
-  validateMessage,
 } from './encoding-utils'
 
 addEventListener('message', event => {

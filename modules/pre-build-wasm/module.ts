@@ -2,13 +2,9 @@
 // so we need to fix this after building.
 
 import { defineNuxtModule } from '@nuxt/kit'
-
-import * as fs from 'fs-extra'
 import * as path from 'node:path'
-import consola from 'consola'
-import { rollup } from 'rollup'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
-import url from '@rollup/plugin-url'
+import { consola } from 'consola'
+import { build } from 'vite'
 
 export default defineNuxtModule({
   async setup(_options, nuxt) {
@@ -19,22 +15,30 @@ export default defineNuxtModule({
         'php-wasm',
       )
 
-      fs.removeSync(target)
-      const bundle = await rollup({
-        input: '@php-wasm/web',
-        plugins: [
-          nodeResolve(),
-          url({
-            include: ['**/*.wasm'],
-            publicPath: `${nuxt.options.app.baseURL}php-wasm/`,
-          }),
-        ],
+      await build({
+        configFile: false,
+        root: nuxt.options.rootDir,
+        base: `${nuxt.options.app.baseURL}php-wasm/`,
+        publicDir: false,
+        assetsInclude: ['**/*.wasm', '**/*.dat', '**/*.so', '**/*.la'],
+        build: {
+          outDir: target,
+          emptyOutDir: true,
+          assetsInlineLimit: 0,
+          modulePreload: false,
+          rollupOptions: {
+            preserveEntrySignatures: 'strict',
+            input: path.join(
+              nuxt.options.rootDir,
+              'modules/pre-build-wasm/entry.ts',
+            ),
+            output: {
+              format: 'es',
+              entryFileNames: 'index.js',
+            },
+          },
+        },
       })
-      await bundle.write({
-        dir: target,
-        format: 'es',
-      })
-      await bundle.close()
 
       consola.success('Pre-compiled @php-wasm/web')
     })

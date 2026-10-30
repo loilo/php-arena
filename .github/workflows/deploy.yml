@@ -15,7 +15,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
       - run: npm ci
       - run: npm run generate
         env:
@@ -24,4 +24,4 @@ jobs:
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
           branch: gh-pages
-          folder: dist
+          folder: .output/public

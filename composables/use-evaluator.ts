@@ -1,6 +1,6 @@
 // Handle conversion in a worker
 
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import type { SupportedPHPVersion } from '@php-wasm/universal'
 import type {
   EvaluationResult,
   EvaluationWorkerResponse,

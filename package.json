@@ -1,6 +1,10 @@
 {
   "name": "nuxt-app",
   "private": true,
+  "engines": {
+    "node": ">=24.18.0",
+    "npm": ">=11.16.0"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -11,23 +15,19 @@
   "devDependencies": {
     "@nuxtjs/google-fonts": "^3.2.0",
     "@nuxtjs/tailwindcss": "^6.12.0",
-    "@pinia/nuxt": "^1.0.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-url": "^8.0.2",
+    "@pinia/nuxt": "0.11.2",
     "@tailwindcss/typography": "^0.5.13",
-    "@types/fs-extra": "^11.0.4",
     "@types/node": "^26.0.0",
     "@vite-pwa/nuxt": "^1.0.0",
-    "fs-extra": "^11.2.0",
-    "nuxt": "^3.11.2",
+    "nuxt": "^3.21.11",
     "nuxt-headlessui": "^1.2.0",
-    "pinia": "^4.0.1",
+    "pinia": "^3.0.4",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
-    "rollup": "^4.17.2",
     "sass": "^1.77.0",
     "type-fest": "^5.4.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vite": "^8.3.5"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.16.0",
@@ -39,7 +39,8 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/view": "^6.26.3",
     "@nuxtjs/color-mode": "^3.4.1",
-    "@php-wasm/web": "^1.0.2",
+    "@php-wasm/universal": "3.1.61",
+    "@php-wasm/web": "3.1.61",
     "@prettier/plugin-php": "^0.22.2",
     "@vueuse/math": "^14.0.0",
     "@vueuse/nuxt": "^14.0.0",

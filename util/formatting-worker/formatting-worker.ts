@@ -1,6 +1,7 @@
 // Handle the actual conversion
 import { format } from './formatting-tools'
-import { FormattingWorkerResponse, validateMessage } from './formatting-utils'
+import { validateMessage } from './formatting-utils'
+import type { FormattingWorkerResponse } from './formatting-utils'
 
 addEventListener('message', async event => {
   const data = event.data

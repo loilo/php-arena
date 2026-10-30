@@ -1,4 +1,7 @@
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import {
+  SupportedPHPVersions,
+  type SupportedPHPVersion,
+} from '@php-wasm/universal'
 
 export type State = {
   code: string
@@ -67,8 +70,11 @@ export const useStorableStateStore = defineStore('storableState', () => {
         autoRunStore.state = value.autoRun
       }
 
-      if (typeof value.phpVersion === 'string') {
-        phpVersionStore.state = value.phpVersion
+      if (
+        typeof value.phpVersion === 'string' &&
+        SupportedPHPVersions.includes(value.phpVersion as SupportedPHPVersion)
+      ) {
+        phpVersionStore.state = value.phpVersion as SupportedPHPVersion
       }
 
       if (typeof value.outputMode === 'string') {

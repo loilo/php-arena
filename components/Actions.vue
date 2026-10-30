@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import type { SupportedPHPVersion } from '@php-wasm/universal'
 import type {
   FormattingResult,
   FormattingWorkerResponse,

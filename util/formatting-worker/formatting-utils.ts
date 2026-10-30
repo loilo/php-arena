@@ -1,4 +1,4 @@
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import type { SupportedPHPVersion } from '@php-wasm/universal'
 
 export type WorkerMessage = {
   id: string

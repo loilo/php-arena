@@ -3,7 +3,7 @@ import * as HtmlPlugin from 'prettier/plugins/html'
 // @ts-expect-error
 import * as PhpPlugin from '@prettier/plugin-php/standalone'
 
-import type { SupportedPHPVersion } from '@php-wasm/web'
+import type { SupportedPHPVersion } from '@php-wasm/universal'
 
 export async function format(
   code: string,
